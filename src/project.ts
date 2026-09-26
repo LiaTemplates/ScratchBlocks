@@ -35,7 +35,8 @@ export class ProjectModel {
   format: Format = 'scratch'
   private vm: VirtualMachine
   private start = new Map<string, StartState>()
-  private options: TextOptions
+  /** languages of the text format; updated when the page is translated */
+  options: TextOptions
   /** text of the last successful load */
   loadedText: string | null = null
 

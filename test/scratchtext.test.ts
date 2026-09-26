@@ -124,6 +124,17 @@ describe('parse', () => {
     expect(stringifyScratchText(parseScratchText(text, et), et)).toBe(text)
   })
 
+  it('reads the display language of a translated page, but writes the course language', () => {
+    const en = ['[Sprite Robo]', 'variables: n = 1', '', 'when green flag clicked', 'repeat (4)', '  move (10) steps', 'end'].join('\n')
+    const project = parseScratchText(en, { lang: 'en' })
+    const french = stringifyScratchText(project, { lang: 'fr' })
+    const german = stringifyScratchText(project, { lang: 'de' })
+    // a German course, shown in French: French text is understood …
+    const read = parseScratchText(french, { lang: 'de', display: 'fr' })
+    // … and written back in German
+    expect(stringifyScratchText(read, { lang: 'de', display: 'fr' })).toBe(german)
+  })
+
   it('reads sprite properties', () => {
     const project = parseScratchText(
       ['[Figur Käfer]', 'Kostüme: robo-b', 'Position: -100, 50', 'Richtung: 180', 'Größe: 50', 'Sichtbar: nein'].join('\n'),
@@ -319,5 +330,18 @@ describe('README examples', async () => {
       const once = stringifyScratchText(parseScratchText(text, en), en)
       expect(stringifyScratchText(parseScratchText(once, en), en)).toBe(once)
     })
+  })
+})
+
+describe('languages', async () => {
+  const { resolveLang } = await import('../src/i18n')
+  it('maps language tags to Scratch languages, English by default', () => {
+    expect(resolveLang('de-AT')).toBe('de')
+    expect(resolveLang('pt-BR')).toBe('pt-br')
+    expect(resolveLang('zh')).toBe('zh-cn')
+    expect(resolveLang('zh-TW')).toBe('zh-tw')
+    expect(resolveLang('et')).toBe('et')
+    expect(resolveLang('xx')).toBe('en')
+    expect(resolveLang('')).toBe('en')
   })
 })

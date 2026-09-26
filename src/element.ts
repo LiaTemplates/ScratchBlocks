@@ -8,7 +8,7 @@ import { resolveProfile, type Profile } from './profiles'
 import { StageView } from './stage'
 import { BlocksEditor } from './workspace'
 import { SpritePane } from './ui/sprites'
-import { lang, t, vmMessages } from './i18n'
+import { courseLang, lang, onLanguageChange, t, vmMessages, type Key } from './i18n'
 import { speak } from './speech'
 
 export type Send = {
@@ -38,6 +38,8 @@ export class LiaScratchElement extends HTMLElement {
   private send: Send | null = null
   private runDone: (() => void) | null = null
   private disposed = false
+  private labels: [HTMLElement, Key][] = []
+  private stopLanguageWatch: (() => void) | null = null
 
   /** resolves once the engine is up and the first project is loaded */
   ready!: Promise<void>
@@ -61,8 +63,12 @@ export class LiaScratchElement extends HTMLElement {
 
   private buildDOM() {
     this.root = document.createElement('div')
-    this.root.className = 'ls-root'
+    this.root.className = 'ls-root notranslate'
     this.root.lang = lang()
+    // page translators (Google) must not touch the blocks: they are
+    // translated by Scratch itself, see onLanguage()
+    this.setAttribute('translate', 'no')
+    this.classList.add('notranslate')
 
     const main = document.createElement('div')
     main.className = 'ls-main'
@@ -110,17 +116,18 @@ export class LiaScratchElement extends HTMLElement {
     const bar = document.createElement('div')
     bar.className = 'ls-bar'
 
-    const button = (label: string, fn: () => void) => {
+    const button = (label: Key, fn: () => void) => {
       const b = document.createElement('button')
       b.type = 'button'
-      b.textContent = label
+      b.textContent = t(label)
+      this.labels.push([b, label])
       b.onclick = fn
       bar.appendChild(b)
       return b
     }
 
     if (this.profile.textView) {
-      const toggle = button(t('text'), () => {
+      const toggle = button('text', () => {
         const hidden = this.bridge.isEditorHidden()
         this.bridge.hideEditor(!hidden)
         toggle.classList.toggle('ls-active', hidden)
@@ -128,11 +135,11 @@ export class LiaScratchElement extends HTMLElement {
     }
 
     if (this.profile.sb3) {
-      button(t('loadSb3'), () => this.loadSb3())
-      button(t('saveSb3'), () => this.saveSb3())
+      button('loadSb3', () => this.loadSb3())
+      button('saveSb3', () => this.saveSb3())
     }
 
-    button(t('fullscreen'), () => {
+    button('fullscreen', () => {
       if (document.fullscreenElement) document.exitFullscreen()
       else this.root.requestFullscreen?.()
     })
@@ -158,7 +165,7 @@ export class LiaScratchElement extends HTMLElement {
     this.vm = vm
     this.renderer = renderer
     this.stage.attach(vm, renderer)
-    this.project = new ProjectModel(vm, { lang: lang() })
+    this.project = new ProjectModel(vm, { lang: courseLang(), display: lang() })
 
     const blocksArea = this.root.querySelector('.ls-blocks') as HTMLElement
     this.blocks = new BlocksEditor(blocksArea, vm, this.profile, lang())
@@ -170,6 +177,7 @@ export class LiaScratchElement extends HTMLElement {
     this.resizeObserver.observe(blocksArea)
 
     await vm.setLocale(lang(), vmMessages())
+    this.stopLanguageWatch = onLanguageChange(() => this.onLanguage())
     if (this.profile.pen) await vm.extensionManager.loadExtensionURL('pen')
 
     vm.on('PROJECT_CHANGED', () => this.scheduleSync())
@@ -188,6 +196,21 @@ export class LiaScratchElement extends HTMLElement {
       }
       check()
     })
+  }
+
+  /**
+   * The page language changed (e.g. "Translate with Google"): blocks, menus
+   * and buttons follow; the text in the code block stays in the course language.
+   */
+  private async onLanguage() {
+    if (this.disposed) return
+    const display = lang()
+    this.project.options = { lang: courseLang(), display }
+    this.root.lang = display
+    for (const [el, key] of this.labels) el.textContent = t(key)
+    await this.vm.setLocale(display, vmMessages(display))
+    this.blocks.setLocale(display)
+    this.sprites.render()
   }
 
   /** Loads text into the VM. The text itself is left untouched. */
@@ -365,6 +388,7 @@ export class LiaScratchElement extends HTMLElement {
   private dispose() {
     if (this.disposed) return
     this.disposed = true
+    this.stopLanguageWatch?.()
     this.stopRun()
     if (this.observeTimer !== null) clearInterval(this.observeTimer)
     if (this.syncTimer !== null) clearTimeout(this.syncTimer)

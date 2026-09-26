@@ -1,7 +1,7 @@
 <!--
 author:   André Dietrich
 email:    LiaScript@web.de
-version:  0.1.0
+version:  0.1.1
 edit:     true
 language: en
 narrator: US English Female
@@ -96,7 +96,7 @@ header of your course.
 
 Fixed version (recommended, will not change anymore):
 
-`import: https://raw.githubusercontent.com/LiaTemplates/ScratchBlocks/0.1.0/README.md`
+`import: https://raw.githubusercontent.com/LiaTemplates/ScratchBlocks/0.1.1/README.md`
 
 Latest version (may change at any time):
 
@@ -246,6 +246,12 @@ Ende                                    end
   languages.
 * Where a block would be ambiguous in a language (e.g. the green flag without
   a readable spelling), it is written with its symbol (⚑ ↻ ↺) or in English.
+* If the page is translated, e.g. with _Translate with Google_ in LiaScript's
+  settings, blocks, menus and buttons switch to the new language right away,
+  using Scratch's own translations (the Scratch interface is excluded from the
+  machine translation). The text in the code block stays in the language of
+  the course, so stored projects and their versions do not change; text in
+  the display language is understood as well.
 * Button texts, dialogs and pen blocks come from Scratch's own translations.
   The few texts of this template itself (e.g. the result of a check) exist in
   English and German; other languages show them in English.
@@ -411,7 +417,7 @@ are allowed; `maxBlocks` limits the number of blocks.
 
 ``` html
 <!--
-import: https://raw.githubusercontent.com/LiaTemplates/ScratchBlocks/0.1.0/README.md
+import: https://raw.githubusercontent.com/LiaTemplates/ScratchBlocks/0.1.1/README.md
 
 @onload
 window.LiaScratch.defineProfile("maze", {

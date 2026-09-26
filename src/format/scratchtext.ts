@@ -29,8 +29,15 @@ import { resolveLang } from '../i18n'
 import { textLanguage, type Property, type TextLanguage } from './language'
 
 export interface TextOptions {
-  /** language of the course, e.g. "en", "de", "et", "pt-br" */
+  /** language the text is written in (the course), e.g. "en", "de", "et", "pt-br" */
   lang: string
+  /** language of the interface, if the page is translated; read as well */
+  display?: string
+}
+
+function languageOf(options: TextOptions) {
+  const code = resolveLang(options.lang)
+  return textLanguage(code, options.display ? resolveLang(options.display) : code)
 }
 
 interface ArgSpec {
@@ -573,7 +580,7 @@ function applyProps(target: any, section: Section, lang: TextLanguage) {
 
 export function parseScratchText(text: string, options: TextOptions): ProjectJSON {
   idCounter = 0
-  const lang = textLanguage(resolveLang(options.lang))
+  const lang = languageOf(options)
   const builder = new ProjectBuilder()
   const sections = splitSections(text, lang)
   const sprites: any[] = []
@@ -924,7 +931,7 @@ function round(n: number) {
 }
 
 export function stringifyScratchText(project: ProjectJSON, options: TextOptions): string {
-  const lang = textLanguage(resolveLang(options.lang))
+  const lang = languageOf(options)
   const stage = project.targets.find((t) => t.isStage)
   const sprites = project.targets.filter((t) => !t.isStage).sort((a, b) => (a.layerOrder ?? 0) - (b.layerOrder ?? 0))
 

@@ -81,9 +81,62 @@ export function resolveLang(tag: string | null | undefined): Lang {
   return LANGUAGES.find((l) => l.toLowerCase() === base) ?? 'en'
 }
 
-/** The language of the current course. */
+/**
+ * The display language: `<html lang>`. LiaScript sets it to the course
+ * language; a page translation (e.g. "Translate with Google" in LiaScript's
+ * settings) changes it to the target language.
+ */
 export function lang(): Lang {
   return resolveLang(typeof document !== 'undefined' ? document.documentElement.lang : 'en')
+}
+
+// --- following page translations -------------------------------------------
+
+let courseTag = ''
+let lastLang = ''
+let observer: MutationObserver | null = null
+const listeners = new Set<() => void>()
+
+/** Is `<html lang>` currently set by a page translation instead of the course? */
+function translated(): boolean {
+  const html = document.documentElement
+  if (html.classList.contains('translated-ltr') || html.classList.contains('translated-rtl')) return true
+  // Google stores "/<from>/<to>" in a cookie, also before its classes are set
+  const cookie = /(?:^|;\s*)googtrans=\/[^/]*\/([^;]+)/.exec(document.cookie)
+  return !!cookie && resolveLang(decodeURIComponent(cookie[1])) === resolveLang(html.lang)
+}
+
+function watch() {
+  if (observer || typeof document === 'undefined') return
+  if (!translated()) courseTag = document.documentElement.lang
+  lastLang = lang()
+  observer = new MutationObserver(() => {
+    if (!translated()) courseTag = document.documentElement.lang
+    const now = lang()
+    if (now !== lastLang) {
+      lastLang = now
+      listeners.forEach((fn) => fn())
+    }
+  })
+  observer.observe(document.documentElement, { attributes: true, attributeFilter: ['lang', 'class'] })
+}
+
+/**
+ * The language of the course itself (`language:` in its header), which does
+ * not change when the page is translated. The text in code blocks is written
+ * in this language, so stored projects and their versions stay stable.
+ */
+export function courseLang(): Lang {
+  if (typeof document === 'undefined') return 'en'
+  watch()
+  return resolveLang(courseTag || (translated() ? '' : document.documentElement.lang))
+}
+
+/** Calls `fn` whenever the display language changes; returns an unsubscribe. */
+export function onLanguageChange(fn: () => void): () => void {
+  watch()
+  listeners.add(fn)
+  return () => listeners.delete(fn)
 }
 
 export function t(key: Key, l: Lang = lang(), ...args: string[]): string {

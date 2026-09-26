@@ -118,13 +118,19 @@ export interface TextLanguage {
   message(key: Key, ...args: string[]): string
 }
 
-const cache = new Map<Lang, TextLanguage>()
+const cache = new Map<string, TextLanguage>()
 
-export function textLanguage(code: Lang): TextLanguage {
-  if (cache.has(code)) return cache.get(code)!
+/**
+ * `code` is the language the text is written in (the course language).
+ * `display` is the language of the interface, e.g. after a page translation:
+ * it is understood when reading, and messages are shown in it.
+ */
+export function textLanguage(code: Lang, display: Lang = code): TextLanguage {
+  const cacheKey = `${code}|${display}`
+  if (cache.has(cacheKey)) return cache.get(cacheKey)!
   const sbLocale = SB_LOCALES[code]
   const l10nWords = LOCALES[code]?.words ?? {}
-  const parseLanguages = code !== 'en' && sbLocale ? ['en', code] : ['en']
+  const parseLanguages = [...new Set(['en', code, display])].filter((l) => l === 'en' || SB_LOCALES[l])
 
   const word = (id: 'stage' | 'sprite' | Property): string =>
     OWN_WORDS[code]?.[id] ?? (l10nWords as any)[id] ?? OWN_WORDS.en[id] ?? id
@@ -135,15 +141,21 @@ export function textLanguage(code: Lang): TextLanguage {
     if (k && !keys.has(k.toLowerCase())) keys.set(k.toLowerCase(), id)
   }
   const properties = Object.keys(OWN_WORDS.en).filter((k) => k !== 'stage' && k !== 'sprite') as Property[]
-  for (const source of [OWN_WORDS[code] ?? {}, l10nWords, OWN_WORDS.en, LOCALES.en?.words ?? {}]) {
+  const displayWords = [OWN_WORDS[display] ?? {}, LOCALES[display]?.words ?? {}]
+  for (const source of [OWN_WORDS[code] ?? {}, l10nWords, OWN_WORDS.en, LOCALES.en?.words ?? {}, ...displayWords]) {
     for (const id of properties) addKey((source as any)[id], id)
   }
   addKey('x', 'x')
   addKey('y', 'y')
   for (const [k, id] of Object.entries(EXTRA_KEYS)) addKey(k, id)
 
-  const stageWords = [word('stage'), OWN_WORDS.en.stage!, 'Bühne', 'Buehne'].map((w) => w.toLowerCase())
-  const spriteWords = [word('sprite'), OWN_WORDS.en.sprite!, 'Figur'].map((w) => w.toLowerCase())
+  const displayWord = (id: 'stage' | 'sprite') => (displayWords[0] as any)[id] ?? (displayWords[1] as any)[id]
+  const stageWords = [word('stage'), OWN_WORDS.en.stage!, displayWord('stage'), 'Bühne', 'Buehne']
+    .filter(Boolean)
+    .map((w) => w.toLowerCase())
+  const spriteWords = [word('sprite'), OWN_WORDS.en.sprite!, displayWord('sprite'), 'Figur']
+    .filter(Boolean)
+    .map((w) => w.toLowerCase())
 
   const endAlias = Object.entries<string>(sbLocale?.aliases ?? {}).find(([, id]) => id === 'scratchblocks:end')?.[0]
   const words = {
@@ -195,7 +207,7 @@ export function textLanguage(code: Lang): TextLanguage {
     const menu = MENUS[key]
     if (!menu) return display
     const needle = squash(display).toLowerCase()
-    for (const c of [code, 'en']) {
+    for (const c of [code, 'en', display]) {
       for (const [value, text] of Object.entries(menu.text[c] ?? {})) {
         if (squash(text).toLowerCase() === needle) return value
       }
@@ -220,9 +232,9 @@ export function textLanguage(code: Lang): TextLanguage {
     menuText,
     englishMenuText,
     menuValue,
-    message: (key, ...args) => t(key, code, ...args),
+    message: (key, ...args) => t(key, display, ...args),
   }
-  cache.set(code, language)
+  cache.set(cacheKey, language)
   return language
 }
 

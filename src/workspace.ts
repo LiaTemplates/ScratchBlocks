@@ -301,6 +301,17 @@ export class BlocksEditor {
     this.requestToolboxUpdate()
   }
 
+  /** Switches all block texts, menus and the toolbox to another language. */
+  setLocale(locale: string) {
+    this.SB.ScratchMsgs.setLocale(locale)
+    const flyout = this.workspace.getFlyout()
+    // like scratch-gui: recycled flyout blocks would keep the old texts
+    flyout.setRecyclingEnabled?.(false)
+    this.vm.refreshWorkspace()
+    this.requestToolboxUpdate()
+    this.withToolboxUpdates(() => flyout.setRecyclingEnabled?.(true))
+  }
+
   setReadOnly(readOnly: boolean) {
     this.workspace.options.readOnly = readOnly
   }
