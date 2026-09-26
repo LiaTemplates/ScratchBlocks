@@ -540,5 +540,7 @@ The element `<lia-scratch>` finds the code block right before it, hides its
 editor and keeps blocks, stage and text in sync. New versions are created by
 LiaScript itself as soon as ▶ is pressed.
 
-License: [AGPL-3.0](LICENSE). Courses that import this template can be
-licensed freely.
+License: [AGPL-3.0](LICENSE), like the Scratch components it is built on.
+Courses that import this template can be licensed freely. The licenses of all
+bundled components and the Scratch trademark notice are listed in
+[NOTICE](NOTICE).

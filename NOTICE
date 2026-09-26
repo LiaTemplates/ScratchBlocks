@@ -1,0 +1,51 @@
+LiaScript Scratch template
+Copyright (C) 2026 André Dietrich
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU Affero General Public License as published by the
+Free Software Foundation, version 3 (see LICENSE).
+
+This program is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License
+for more details.
+
+Courses that only import this template (LiaScript `import:`) are not derived
+works of it and can be licensed freely.
+
+
+Third-party components
+======================
+
+dist/index.js bundles the following components. Their license texts are
+included in their npm packages (node_modules/<package>/LICENSE).
+
+| Component                         | Copyright                           | License      |
+| --------------------------------- | ----------------------------------- | ------------ |
+| @scratch/scratch-vm               | Scratch Foundation                  | AGPL-3.0     |
+| @scratch/scratch-render           | Scratch Foundation                  | AGPL-3.0     |
+| @scratch/scratch-storage          | Scratch Foundation                  | AGPL-3.0     |
+| @scratch/scratch-svg-renderer     | Scratch Foundation                  | AGPL-3.0     |
+| scratch-audio                     | Scratch Foundation                  | AGPL-3.0     |
+| scratch-l10n (translations)       | Scratch Foundation                  | AGPL-3.0     |
+| src/vendor/scratch-gui/ (from @scratch/scratch-gui 15.1.1) | Scratch Foundation | AGPL-3.0 |
+| scratch-blocks                    | Scratch Foundation                  | Apache-2.0   |
+| blockly, @blockly/*               | Google LLC, Raspberry Pi Foundation | Apache-2.0   |
+| scratch-render-fonts              | Scratch Foundation                  | Apache-2.0   |
+|   fonts contained in it           | their respective authors            | SIL OFL 1.1  |
+| scratchblocks                     | Tim Radvan and contributors         | MIT          |
+
+The built-in sprites, backdrops and sounds (src/assets) were made for this
+template and are dedicated to the public domain (CC0 1.0), see
+src/assets/ATTRIBUTION.md.
+
+
+Trademarks
+==========
+
+The Scratch trademarks, including the Scratch name, logo, the Scratch Cat,
+Gobo, Pico, Nano, Tera and Giga graphics, are property of the Scratch
+Foundation. This template is not an official Scratch product and is not
+endorsed by the Scratch Foundation; the name "Scratch" is only used to
+describe compatibility. The Scratch Cat and other Scratch graphics are not
+included.
