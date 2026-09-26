@@ -1,5 +1,5 @@
 {
-  "name": "lia-scratch",
+  "name": "lia-scratchblocks",
   "version": "0.1.0",
   "description": "LiaScript template: real Scratch 3 blocks and stage inside LiaScript code blocks, versioned via LiaScript's code history",
   "app": "dist/index.js",
@@ -31,7 +31,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/LiaTemplates/Scratch.git"
+    "url": "git+https://github.com/LiaTemplates/ScratchBlocks.git"
   },
   "author": "André Dietrich <LiaScript@web.de>",
   "license": "AGPL-3.0-only",
@@ -52,5 +52,9 @@
     "scratchblocks": "3.7.1",
     "typescript": "^5.9.0",
     "vitest": "^3.2.0"
+  },
+  "homepage": "https://github.com/LiaTemplates/ScratchBlocks#readme",
+  "bugs": {
+    "url": "https://github.com/LiaTemplates/ScratchBlocks/issues"
   }
 }

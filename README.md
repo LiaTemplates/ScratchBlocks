@@ -2,6 +2,7 @@
 author:   André Dietrich
 email:    LiaScript@web.de
 version:  0.1.0
+edit:     true
 language: en
 narrator: US English Female
 comment:  Real Scratch 3 in LiaScript: blocks and stage overlay the code editor,
@@ -58,7 +59,7 @@ window.LiaScratch.check("@0", send, "@'input(0)", "@1", async function (api) {
 @end
 -->
 
-# Scratch
+# ScratchBlocks
 
     --{{0}}--
 This template turns a LiaScript code block into a real Scratch 3 project.
@@ -95,11 +96,11 @@ header of your course.
 
 Fixed version (recommended, will not change anymore):
 
-`import: https://raw.githubusercontent.com/LiaTemplates/Scratch/0.1.0/README.md`
+`import: https://raw.githubusercontent.com/LiaTemplates/ScratchBlocks/0.1.0/README.md`
 
 Latest version (may change at any time):
 
-`import: https://raw.githubusercontent.com/LiaTemplates/Scratch/main/README.md`
+`import: https://raw.githubusercontent.com/LiaTemplates/ScratchBlocks/main/README.md`
 
 Then attach one of the macros to a code block:
 
@@ -410,7 +411,7 @@ are allowed; `maxBlocks` limits the number of blocks.
 
 ``` html
 <!--
-import: https://raw.githubusercontent.com/LiaTemplates/Scratch/0.1.0/README.md
+import: https://raw.githubusercontent.com/LiaTemplates/ScratchBlocks/0.1.0/README.md
 
 @onload
 window.LiaScratch.defineProfile("maze", {
