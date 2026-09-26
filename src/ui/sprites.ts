@@ -3,7 +3,7 @@
 import { SPRITES } from '../assets/library'
 import { expandProject } from '../format/json'
 import { spriteJSON } from '../format/default'
-import { lang, t } from '../i18n'
+import { t } from '../i18n'
 import type { Profile } from '../profiles'
 import type { VirtualMachine } from '../engine'
 import { promptDialog } from './dialogs'
@@ -106,7 +106,7 @@ export class SpritePane {
     const keys = Object.keys(SPRITES)
     const key = keys[0]
     const sprite = SPRITES[key]
-    const json = spriteJSON(sprite.name[lang()], sprite.costumes, sprite.sounds)
+    const json = spriteJSON(sprite.name, sprite.costumes, sprite.sounds)
     const [expanded] = expandProject({ targets: [json] }).targets
     await vm.addSprite(JSON.stringify(expanded))
     this.callbacks.added()

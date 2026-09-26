@@ -23,7 +23,7 @@ export interface Profile {
   resetOnRun: boolean
 }
 
-const STUFE1 = [
+const LEVEL1 = [
   'event_whenflagclicked',
   'motion_movesteps',
   'motion_turnright',
@@ -34,8 +34,8 @@ const STUFE1 = [
   'control_repeat',
 ]
 
-const STUFE2 = [
-  ...STUFE1,
+const LEVEL2 = [
+  ...LEVEL1,
   'event_whenthisspriteclicked',
   'event_whenkeypressed',
   'motion_gotoxy',
@@ -68,7 +68,7 @@ const STUFE2 = [
 ]
 
 /** Everything except lists, custom blocks and clones. */
-const STUFE3_EXCLUDE = [
+const LEVEL3_EXCLUDE = [
   'control_create_clone_of',
   'control_start_as_clone',
   'control_delete_this_clone',
@@ -90,8 +90,8 @@ const STUFE3_EXCLUDE = [
 ]
 
 export const PROFILES: Record<string, Profile> = {
-  stufe1: {
-    blocks: STUFE1,
+  level1: {
+    blocks: LEVEL1,
     zoom: 1.1,
     sprites: false,
     textView: false,
@@ -100,8 +100,8 @@ export const PROFILES: Record<string, Profile> = {
     maxBlocks: 0,
     resetOnRun: true,
   },
-  stufe2: {
-    blocks: STUFE2,
+  level2: {
+    blocks: LEVEL2,
     zoom: 0.9,
     sprites: false,
     textView: false,
@@ -110,9 +110,9 @@ export const PROFILES: Record<string, Profile> = {
     maxBlocks: 0,
     resetOnRun: true,
   },
-  stufe3: {
+  level3: {
     blocks: 'all',
-    exclude: STUFE3_EXCLUDE,
+    exclude: LEVEL3_EXCLUDE,
     pen: true,
     zoom: 0.675,
     sprites: true,
@@ -122,7 +122,7 @@ export const PROFILES: Record<string, Profile> = {
     maxBlocks: 0,
     resetOnRun: true,
   },
-  stufe4: {
+  level4: {
     blocks: 'all',
     pen: true,
     zoom: 0.675,
@@ -136,8 +136,9 @@ export const PROFILES: Record<string, Profile> = {
 }
 
 /**
- * Resolves a profile name ("stufe1" … "stufe4", also "1" … "4") or a JSON
- * object, which extends a base profile via `"base": "stufe2"`.
+ * Resolves a profile name ("level1" … "level4", also "1" … "4" or the German
+ * "stufe1" … "stufe4") or a JSON object, which extends a base profile via
+ * `"base": "level2"`.
  */
 export function resolveProfile(spec: string | null | undefined): Profile {
   const raw = (spec || '').trim()
@@ -145,22 +146,22 @@ export function resolveProfile(spec: string | null | undefined): Profile {
   if (raw.startsWith('{')) {
     try {
       const custom = JSON.parse(raw)
-      const base = resolveProfile(custom.base || 'stufe4')
+      const base = resolveProfile(custom.base || 'level4')
       return { ...base, ...custom }
     } catch (e) {
       console.warn('LiaScratch: invalid profile', raw, e)
-      return PROFILES.stufe4
+      return PROFILES.level4
     }
   }
 
-  const key = /^\d$/.test(raw) ? 'stufe' + raw : raw.toLowerCase()
-  return PROFILES[key] || PROFILES.stufe4
+  const key = raw.toLowerCase().replace(/^stufe(\d)$/, 'level$1').replace(/^(\d)$/, 'level$1')
+  return PROFILES[key] || PROFILES.level4
 }
 
-/** Registers a named profile that extends `spec.base` (default: stufe4). */
+/** Registers a named profile that extends `spec.base` (default: level4). */
 export function defineProfile(name: string, spec: Partial<Profile> & { base?: string }) {
   const { base, ...rest } = spec
-  PROFILES[name.toLowerCase()] = { ...resolveProfile(base || 'stufe4'), ...rest }
+  PROFILES[name.toLowerCase()] = { ...resolveProfile(base || 'level4'), ...rest }
 }
 
 export function isAllowed(profile: Profile, opcode: string): boolean {

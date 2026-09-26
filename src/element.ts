@@ -8,9 +8,8 @@ import { resolveProfile, type Profile } from './profiles'
 import { StageView } from './stage'
 import { BlocksEditor } from './workspace'
 import { SpritePane } from './ui/sprites'
-import { lang, t } from './i18n'
+import { lang, t, vmMessages } from './i18n'
 import { speak } from './speech'
-import { VM_MESSAGES } from './vm-locale'
 
 export type Send = {
   lia: (msg: string, details?: any[], ok?: boolean) => void
@@ -170,7 +169,7 @@ export class LiaScratchElement extends HTMLElement {
     this.resizeObserver = new ResizeObserver(() => this.blocks.resize())
     this.resizeObserver.observe(blocksArea)
 
-    await vm.setLocale(lang(), VM_MESSAGES[lang()])
+    await vm.setLocale(lang(), vmMessages())
     if (this.profile.pen) await vm.extensionManager.loadExtensionURL('pen')
 
     vm.on('PROJECT_CHANGED', () => this.scheduleSync())

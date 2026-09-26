@@ -7,8 +7,8 @@ public domain under [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/
 | ---------------- | -------- | ---------------------------------------- |
 | `robo-a`         | costume  | `sprites/robo-a.svg`, drawn for LiaScratch |
 | `robo-b`         | costume  | `sprites/robo-b.svg`, drawn for LiaScratch |
-| `weiss`          | backdrop | `backdrops/weiss.svg`, plain white stage |
-| `plopp`, `piep`  | sound    | synthesized at runtime in `sounds.ts`    |
+| `white`          | backdrop | `backdrops/white.svg`, plain white stage |
+| `pop`, `beep`    | sound    | synthesized at runtime in `sounds.ts`    |
 
 The Scratch Cat and other Scratch library assets are intentionally not used:
 the Scratch Cat is a trademark of the Scratch Foundation.

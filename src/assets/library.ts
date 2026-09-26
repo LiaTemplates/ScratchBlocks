@@ -6,7 +6,7 @@
 
 import roboA from 'bundle-text:./sprites/robo-a.svg'
 import roboB from 'bundle-text:./sprites/robo-b.svg'
-import weiss from 'bundle-text:./backdrops/weiss.svg'
+import white from 'bundle-text:./backdrops/white.svg'
 import { tone } from './sounds'
 
 export interface LibraryCostume {
@@ -26,8 +26,8 @@ export interface LibrarySound {
 }
 
 export interface LibrarySprite {
-  /** default name of the sprite, per language */
-  name: { de: string; en: string }
+  /** default name of the sprite */
+  name: string
   costumes: string[]
   sounds: string[]
 }
@@ -38,17 +38,17 @@ export const COSTUMES: Record<string, LibraryCostume> = {
 }
 
 export const BACKDROPS: Record<string, LibraryCostume> = {
-  weiss: { key: 'weiss', dataFormat: 'svg', data: weiss, rotationCenterX: 240, rotationCenterY: 180 },
+  white: { key: 'white', dataFormat: 'svg', data: white, rotationCenterX: 240, rotationCenterY: 180 },
 }
 
 export const SOUNDS: Record<string, LibrarySound> = {
-  plopp: tone('plopp', [[660, 0.04], [440, 0.08]]),
-  piep: tone('piep', [[880, 0.2]]),
+  pop: tone('pop', [[660, 0.04], [440, 0.08]]),
+  beep: tone('beep', [[880, 0.2]]),
 }
 
 export const SPRITES: Record<string, LibrarySprite> = {
-  robo: { name: { de: 'Robo', en: 'Robo' }, costumes: ['robo-a', 'robo-b'], sounds: ['plopp'] },
+  robo: { name: 'Robo', costumes: ['robo-a', 'robo-b'], sounds: ['pop'] },
 }
 
 export const DEFAULT_SPRITE = 'robo'
-export const DEFAULT_BACKDROP = 'weiss'
+export const DEFAULT_BACKDROP = 'white'

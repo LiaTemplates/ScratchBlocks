@@ -1,7 +1,8 @@
-// API for teacher-written checks (@Scratch.check). German names with English
-// aliases; see README "Aufgaben mit Prüfung".
+// API for teacher-written checks (@Scratch.check), see README "Tasks with checks".
+// English names, with German aliases (lauf, erwarte, figur, buehne, bloecke).
 
 import type { LiaScratchElement } from './element'
+import { t } from './i18n'
 
 function spriteState(target: any) {
   const costume = () => target.getCostumes()[target.currentCostume]?.name
@@ -54,7 +55,7 @@ export function createCheckApi(element: LiaScratchElement) {
 
   const figur = (name: string) => {
     const target = vm.runtime.getSpriteTargetByName(name)
-    if (!target) throw new Error(`Figur "${name}" gibt es nicht.`)
+    if (!target) throw new Error(t('unknownSprite', undefined, name))
     return spriteState(target)
   }
 

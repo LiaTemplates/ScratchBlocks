@@ -26,8 +26,8 @@
     "serve": "npx @liascript/devserver --input README.md --port 3000 --live",
     "postinstall": "node scripts/patch-vm.mjs",
     "prebuild": "node scripts/patch-vm.mjs",
-    "gen:specs": "vite-node scripts/gen-specs.ts",
-    "typecheck": "tsc -p ."
+    "typecheck": "tsc -p .",
+    "gen": "vite-node scripts/gen.ts"
   },
   "repository": {
     "type": "git",
@@ -47,6 +47,7 @@
     "process": "^0.11.10",
     "scratch-audio": "2.0.268",
     "scratch-blocks": "2.1.19",
+    "scratch-l10n": "^6.1.118",
     "scratch-render-fonts": "1.0.252",
     "scratchblocks": "3.7.1",
     "typescript": "^5.9.0",

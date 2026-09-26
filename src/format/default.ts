@@ -47,7 +47,7 @@ export function spriteJSON(name: string, costumes: string[], sounds: string[], l
   }
 }
 
-export function defaultSpriteJSON(lang: 'de' | 'en', layerOrder = 1) {
+export function defaultSpriteJSON(layerOrder = 1) {
   const sprite = SPRITES[DEFAULT_SPRITE]
-  return spriteJSON(sprite.name[lang], sprite.costumes, sprite.sounds, layerOrder)
+  return spriteJSON(sprite.name, sprite.costumes, sprite.sounds, layerOrder)
 }

@@ -1,36 +1,37 @@
-// Readable text format based on scratchblocks syntax (German or English).
+// Readable text format based on scratchblocks syntax, in every language
+// Scratch supports (the course language, English is always understood too).
 //
-//   [Bühne]                     ← optional section headers
-//   Variablen: Punkte = 0
+//   [Stage]                     ← optional section headers
+//   variables: score = 0
 //
-//   Wenn die grüne Flagge angeklickt
-//   setze [Punkte v] auf (0)
+//   when green flag clicked
+//   set [score v] to (0)
 //
-//   [Figur Robo]
-//   Position: -100, 0
+//   [Sprite Robo]
+//   x: -100
+//   costumes: robo-a, robo-b*   ← * marks the current costume
 //
-//   Wenn diese Figur angeklickt wird
-//   ändere [Punkte v] um (1)
+//   when this sprite clicked
+//   change [score v] by (1)
 //
 // Without headers, all scripts belong to "Robo" on a white stage.
 // parseScratchText builds a project.json, stringifyScratchText writes it back.
 // Anything the text cannot express makes stringify throw (the caller then
 // falls back to the json format).
 
-import { loadLanguages, parse } from 'scratchblocks/syntax/index.js'
-import deLocale from 'scratchblocks/locales/de.json'
-import commands from 'scratchblocks/syntax/commands.js'
+import { parse } from 'scratchblocks/syntax/index.js'
 import specs from './specs.json'
 import { expandProject, type ProjectJSON } from './json'
 import { defaultSpriteJSON, spriteJSON, stageJSON } from './default'
 import { DEFAULT_BACKDROP, DEFAULT_SPRITE, SPRITES } from '../assets/library'
 import { libraryIds } from '../engine'
+import { resolveLang } from '../i18n'
+import { textLanguage, type Property, type TextLanguage } from './language'
 
 export interface TextOptions {
-  lang: 'de' | 'en'
+  /** language of the course, e.g. "en", "de", "et", "pt-br" */
+  lang: string
 }
-
-type Lang = TextOptions['lang']
 
 interface ArgSpec {
   name: string
@@ -50,59 +51,11 @@ interface BlockSpec {
 }
 
 const BLOCKS = specs.blocks as Record<string, BlockSpec>
-const MENUS = specs.menus as Record<string, { options: string[]; en: Record<string, string>; de: Record<string, string> }>
-
-loadLanguages({ de: deLocale })
 
 /** scratchblocks id → opcode */
 const OPCODE_BY_SB: Record<string, string> = {}
 for (const [opcode, spec] of Object.entries(BLOCKS)) {
   if (opcode !== 'control_if_else') OPCODE_BY_SB[spec.sb] = opcode
-}
-
-const ENGLISH_SPECS: Record<string, string> = {}
-for (const command of commands as any[]) if (command.id) ENGLISH_SPECS[command.id] = command.spec
-
-/** Readable spellings instead of icons (all are aliases scratchblocks parses). */
-const SPEC_OVERRIDES: Record<Lang, Record<string, string>> = {
-  de: {
-    EVENT_WHENFLAGCLICKED: 'Wenn die grüne Flagge angeklickt',
-    MOTION_TURNRIGHT: 'drehe dich nach rechts um %1 Grad',
-    MOTION_TURNLEFT: 'drehe dich nach links um %1 Grad',
-  },
-  en: {
-    EVENT_WHENFLAGCLICKED: 'when green flag clicked',
-    MOTION_TURNRIGHT: 'turn right %1 degrees',
-    MOTION_TURNLEFT: 'turn left %1 degrees',
-  },
-}
-
-const WORDS = {
-  de: { end: 'Ende', else: 'sonst', define: 'Definiere', stage: 'Bühne', sprite: 'Figur', yes: 'ja', no: 'nein' },
-  en: { end: 'end', else: 'else', define: 'define', stage: 'Stage', sprite: 'Sprite', yes: 'yes', no: 'no' },
-}
-
-/** property keys, first entry is the one that is written */
-const PROPERTIES: Record<string, { de: string; en: string; aliases: string[] }> = {
-  costumes: { de: 'Kostüme', en: 'costumes', aliases: ['kostueme'] },
-  costume: { de: 'Kostüm', en: 'costume', aliases: ['kostuem'] },
-  backdrops: { de: 'Hintergründe', en: 'backdrops', aliases: ['hintergruende'] },
-  backdrop: { de: 'Hintergrund', en: 'backdrop', aliases: [] },
-  sounds: { de: 'Klänge', en: 'sounds', aliases: ['klaenge'] },
-  position: { de: 'Position', en: 'position', aliases: [] },
-  direction: { de: 'Richtung', en: 'direction', aliases: [] },
-  size: { de: 'Größe', en: 'size', aliases: ['groesse'] },
-  visible: { de: 'Sichtbar', en: 'visible', aliases: [] },
-  draggable: { de: 'Ziehbar', en: 'draggable', aliases: [] },
-  rotation: { de: 'Drehtyp', en: 'rotation style', aliases: [] },
-  variables: { de: 'Variablen', en: 'variables', aliases: [] },
-  lists: { de: 'Listen', en: 'lists', aliases: [] },
-  show: { de: 'Anzeigen', en: 'show', aliases: [] },
-}
-
-const PROPERTY_BY_KEY = new Map<string, string>()
-for (const [id, p] of Object.entries(PROPERTIES)) {
-  for (const key of [p.de, p.en, ...p.aliases]) PROPERTY_BY_KEY.set(key.toLowerCase(), id)
 }
 
 const PRIMITIVES: Record<string, number> = {
@@ -121,8 +74,12 @@ const PRIMITIVE_TYPES = Object.fromEntries(Object.entries(PRIMITIVES).map(([k, v
 // ---------------------------------------------------------------------------
 
 export class TextError extends Error {
-  constructor(message: string, readonly line?: number) {
-    super(line ? `Zeile ${line}: ${message}` : message)
+  constructor(
+    message: string,
+    readonly line?: number,
+    lang?: TextLanguage
+  ) {
+    super(line ? `${(lang ?? textLanguage('en')).message('line', String(line))}: ${message}` : message)
   }
 }
 
@@ -130,14 +87,35 @@ interface Section {
   kind: 'stage' | 'sprite'
   name: string
   line: number
-  props: [string, string, number][]
+  props: [Property, string, number][]
   code: string
   codeLine: number
 }
 
-const HEADER = /^\s*\[\s*(bühne|buehne|stage|figur|sprite)(?:\s+(.*?))?\s*\]\s*$/i
+const HEADER = /^\s*\[\s*([^\[\]]+?)\s*\]\s*$/
 
-function splitSections(text: string, lang: Lang): Section[] {
+/** "[Stage]" → stage, "[Sprite Name]" → sprite "Name", anything else → null */
+function header(line: string, lang: TextLanguage): { kind: 'stage' | 'sprite'; name: string } | null {
+  const m = HEADER.exec(line)
+  if (!m) return null
+  const inner = m[1]
+  if (lang.isStageWord(inner)) return { kind: 'stage', name: 'Stage' }
+  const space = inner.indexOf(' ')
+  const first = space < 0 ? inner : inner.slice(0, space)
+  if (lang.isSpriteWord(first)) {
+    return { kind: 'sprite', name: space < 0 ? SPRITES[DEFAULT_SPRITE].name : inner.slice(space + 1).trim() }
+  }
+  // sprite words with spaces
+  for (const n of [1, 2, 3]) {
+    const words = inner.split(' ')
+    if (words.length > n && lang.isSpriteWord(words.slice(0, n + 1).join(' '))) {
+      return { kind: 'sprite', name: words.slice(n + 1).join(' ') || SPRITES[DEFAULT_SPRITE].name }
+    }
+  }
+  return null
+}
+
+function splitSections(text: string, lang: TextLanguage): Section[] {
   const lines = text.replace(/\r\n?/g, '\n').split('\n')
   const sections: Section[] = []
   let current: Section | null = null
@@ -145,12 +123,11 @@ function splitSections(text: string, lang: Lang): Section[] {
   const code: string[][] = []
 
   lines.forEach((line, i) => {
-    const header = HEADER.exec(line)
-    if (header) {
-      const kind = /^(bühne|buehne|stage)$/i.test(header[1]) ? 'stage' : 'sprite'
+    const head = header(line, lang)
+    if (head) {
       current = {
-        kind,
-        name: kind === 'stage' ? 'Stage' : (header[2] || SPRITES[DEFAULT_SPRITE].name[lang]).trim(),
+        kind: head.kind,
+        name: head.name,
         line: i + 1,
         props: [],
         code: '',
@@ -165,7 +142,7 @@ function splitSections(text: string, lang: Lang): Section[] {
     if (!current) {
       current = {
         kind: 'sprite',
-        name: SPRITES[DEFAULT_SPRITE].name[lang],
+        name: SPRITES[DEFAULT_SPRITE].name,
         line: 0,
         props: [],
         code: '',
@@ -177,8 +154,9 @@ function splitSections(text: string, lang: Lang): Section[] {
     }
 
     const prop = /^\s*([^:\[\]()<>]+?)\s*:\s*(.*)$/.exec(line)
-    if (inProps && prop && PROPERTY_BY_KEY.has(prop[1].toLowerCase())) {
-      current.props.push([PROPERTY_BY_KEY.get(prop[1].toLowerCase())!, prop[2].trim(), i + 1])
+    const property = prop ? lang.property(prop[1]) : undefined
+    if (inProps && prop && property) {
+      current.props.push([property, prop[2].trim(), i + 1])
       current.codeLine = i + 2
       return
     }
@@ -197,17 +175,6 @@ function splitSections(text: string, lang: Lang): Section[] {
 let idCounter = 0
 const nextId = (prefix = 'b') => `${prefix}${++idCounter}`
 
-function menuValue(key: string, display: string): string {
-  const menu = MENUS[key]
-  if (!menu) return display
-  for (const lang of ['de', 'en'] as const) {
-    for (const [value, text] of Object.entries(menu[lang])) {
-      if (text.toLowerCase() === display.toLowerCase()) return value
-    }
-  }
-  return display
-}
-
 function parseValue(v: string): string | number {
   const n = Number(v)
   return v.trim() !== '' && Number.isFinite(n) && String(n) === v.trim() ? n : v
@@ -219,9 +186,7 @@ function splitList(v: string): string[] {
 
 class ProjectBuilder {
   stage: any
-  lang: Lang
-  constructor(lang: Lang) {
-    this.lang = lang
+  constructor() {
     this.stage = stageJSON()
   }
 
@@ -261,7 +226,7 @@ class ScriptConverter {
   constructor(
     readonly target: any,
     readonly builder: ProjectBuilder,
-    readonly firstLine: number
+    readonly lang: TextLanguage
   ) {}
 
   /** the block that could not be converted, to find its line */
@@ -354,7 +319,7 @@ class ScriptConverter {
 
     let opcode = OPCODE_BY_SB[info.id]
     if (info.id === 'CONTROL_IF' && this.scripts(block).length > 1) opcode = 'control_if_else'
-    if (!opcode) this.fail(`unbekannter Block „${blockText(block)}“`, block)
+    if (!opcode) this.fail(this.lang.message('unknownBlock', blockText(block)), block)
 
     const spec = BLOCKS[opcode]
     const id = this.add(opcode, parent)
@@ -402,7 +367,7 @@ class ScriptConverter {
       const name = raw || (type === 'list' ? 'list' : 'variable')
       return [name, this.builder.variable(this.target, name, type)]
     }
-    return [menuValue(`${opcode}.${arg.name}`, raw), null]
+    return [this.lang.menuValue(`${opcode}.${arg.name}`, raw), null]
   }
 
   private input(opcode: string, arg: ArgSpec, child: any, parent: string): any[] | null {
@@ -418,7 +383,7 @@ class ScriptConverter {
       if (shadow) {
         const sid = this.add(shadow, parent, { shadow: true })
         if (arg.shadowField) {
-          this.blocks[sid].fields[arg.shadowField] = [menuValue(`${shadow}.${arg.shadowField}`, value), null]
+          this.blocks[sid].fields[arg.shadowField] = [this.lang.menuValue(`${shadow}.${arg.shadowField}`, value), null]
         }
         return sid
       }
@@ -500,7 +465,7 @@ class ScriptConverter {
   private procCall(block: any, parent: string | null): string {
     const proccode = ScriptConverter.proccode(block.info.call)
     const proc = this.procs.get(proccode)
-    if (!proc) this.fail(`unbekannter eigener Block „${blockText(block)}“`, block)
+    if (!proc) this.fail(this.lang.message('unknownCustomBlock', blockText(block)), block)
     const id = this.add('procedures_call', parent)
     const types = proccode.match(/%[sb]/g) || []
     const args = this.args(block)
@@ -534,39 +499,39 @@ function blockText(block: any): string {
     .join(' ')
 }
 
-function applyProps(target: any, section: Section, builder: ProjectBuilder) {
+function applyProps(target: any, section: Section, lang: TextLanguage) {
   for (const [prop, value, line] of section.props) {
     const fail = (message: string): never => {
-      throw new TextError(message, line)
+      throw new TextError(message, line, lang)
     }
     const number = (v: string) => {
       const n = Number(v.trim())
-      if (!Number.isFinite(n)) fail(`„${v}“ ist keine Zahl`)
+      if (v.trim() === '' || !Number.isFinite(n)) fail(lang.message('notANumber', v.trim()))
       return n
     }
-    const yes = (v: string) => /^(ja|yes|true|1)$/i.test(v.trim())
 
     switch (prop) {
       case 'costumes':
       case 'backdrops': {
-        const keys = splitList(value)
-        target.costumes = keys.map((key) => ({ name: key, asset: key }))
-        break
-      }
-      case 'costume':
-      case 'backdrop': {
-        const index = target.costumes.findIndex((c: any) => c.name === value.trim())
-        if (index < 0) fail(`Kostüm „${value}“ gibt es nicht`)
-        target.currentCostume = index
+        const entries = splitList(value)
+        const current = entries.findIndex((e) => e.endsWith('*'))
+        target.costumes = entries.map((e) => e.replace(/\*$/, '').trim()).map((key) => ({ name: key, asset: key }))
+        target.currentCostume = Math.max(0, current)
         break
       }
       case 'sounds':
         target.sounds = splitList(value).map((key) => ({ name: key, asset: key }))
         break
+      case 'x':
+        target.x = number(value)
+        break
+      case 'y':
+        target.y = number(value)
+        break
       case 'position': {
-        const [x, y] = value.split(',').map(number)
-        target.x = x
-        target.y = y ?? 0
+        const [x, y = '0'] = value.split(',')
+        target.x = number(x)
+        target.y = number(y)
         break
       }
       case 'direction':
@@ -576,10 +541,10 @@ function applyProps(target: any, section: Section, builder: ProjectBuilder) {
         target.size = number(value)
         break
       case 'visible':
-        target.visible = yes(value)
+        target.visible = lang.isYes(value)
         break
       case 'draggable':
-        target.draggable = yes(value)
+        target.draggable = lang.isYes(value)
         break
       case 'rotation':
         target.rotationStyle = value.trim()
@@ -599,24 +564,24 @@ function applyProps(target: any, section: Section, builder: ProjectBuilder) {
           target.lists[nextId('list')] = [name, items]
         }
         break
-      case 'show':
+      case 'monitors':
         target.__show = splitList(value)
         break
     }
   }
-  void builder
 }
 
 export function parseScratchText(text: string, options: TextOptions): ProjectJSON {
   idCounter = 0
-  const builder = new ProjectBuilder(options.lang)
-  const sections = splitSections(text, options.lang)
+  const lang = textLanguage(resolveLang(options.lang))
+  const builder = new ProjectBuilder()
+  const sections = splitSections(text, lang)
   const sprites: any[] = []
 
   // sections first, so variables declared anywhere are known to all scripts
   const targets = sections.map((section) => {
     if (section.kind === 'stage') {
-      applyProps(builder.stage, section, builder)
+      applyProps(builder.stage, section, lang)
       return builder.stage
     }
     let sprite = sprites.find((s) => s.name === section.name)
@@ -625,12 +590,12 @@ export function parseScratchText(text: string, options: TextOptions): ProjectJSO
       sprite = spriteJSON(section.name, lib.costumes, lib.sounds, sprites.length + 1)
       sprites.push(sprite)
     }
-    applyProps(sprite, section, builder)
+    applyProps(sprite, section, lang)
     return sprite
   })
 
   if (!sprites.length && !sections.some((s) => s.kind === 'stage')) {
-    sprites.push(defaultSpriteJSON(options.lang))
+    sprites.push(defaultSpriteJSON())
   }
 
   sections.forEach((section, i) => {
@@ -638,12 +603,12 @@ export function parseScratchText(text: string, options: TextOptions): ProjectJSO
     const target = targets[i]
     let doc: any
     try {
-      doc = parse(section.code, { languages: ['en', 'de'] })
+      doc = parse(section.code, { languages: lang.parseLanguages })
     } catch (e: any) {
-      throw new TextError(e.message, section.codeLine)
+      throw new TextError(e.message, section.codeLine, lang)
     }
 
-    const converter = new ScriptConverter(target, builder, section.codeLine)
+    const converter = new ScriptConverter(target, builder, lang)
     converter.collectProcedures(doc.scripts)
 
     // scratchblocks does not report lines; map scripts to their first line
@@ -655,7 +620,7 @@ export function parseScratchText(text: string, options: TextOptions): ProjectJSO
       } catch (e: any) {
         const start = starts[si] ?? 0
         const offset = converter.failed ? findLine(section.code, start, blockText(converter.failed)) : 0
-        throw new TextError(e.message, section.codeLine + start + offset)
+        throw new TextError(e.message, section.codeLine + start + offset, lang)
       }
       y += 64 + 48 * countBlocks(script)
     })
@@ -671,7 +636,7 @@ export function parseScratchText(text: string, options: TextOptions): ProjectJSO
       const scope = [target, builder.stage].find((t) =>
         Object.values<any>(t.variables).some((v) => v[0] === name)
       )
-      if (!scope) throw new TextError(`Variable „${name}“ gibt es nicht`)
+      if (!scope) throw new TextError(lang.message('unknownVariable', name))
       const [id] = Object.entries<any>(scope.variables).find(([, v]) => v[0] === name)!
       project.monitors!.push({
         id,
@@ -736,14 +701,6 @@ function findLine(code: string, start: number, text: string): number {
 // writing
 // ---------------------------------------------------------------------------
 
-function specText(sbId: string, lang: Lang): string {
-  const override = SPEC_OVERRIDES[lang][sbId]
-  if (override) return override
-  const spec = lang === 'de' ? (deLocale as any).commands[sbId] ?? ENGLISH_SPECS[sbId] : ENGLISH_SPECS[sbId]
-  if (!spec) throw new Error(`no text for ${sbId}`)
-  return spec.replace(/\s*@\w+/g, '').trim()
-}
-
 function escape(value: string) {
   return String(value).replace(/([\[\]()<>\\])/g, '\\$1')
 }
@@ -751,7 +708,7 @@ function escape(value: string) {
 class ScriptWriter {
   constructor(
     readonly target: any,
-    readonly lang: Lang
+    readonly lang: TextLanguage
   ) {}
 
   get blocks() {
@@ -779,10 +736,10 @@ class ScriptWriter {
     const spec = BLOCKS[block.opcode]
     if (!spec?.statements.length) return
     spec.statements.forEach((name, i) => {
-      if (i > 0) out.push(indent + WORDS[this.lang].else)
+      if (i > 0) out.push(indent + this.lang.words.else)
       this.stack(this.blocks[block.inputs[name]?.[1]] ? block.inputs[name][1] : null, indent + '  ', out)
     })
-    out.push(indent + WORDS[this.lang].end)
+    out.push(indent + this.lang.words.end)
   }
 
   private definition(block: any): string {
@@ -795,7 +752,8 @@ class ScriptWriter {
       const name = escape(names[i++])
       return t === '%b' ? `<${name}>` : `(${name})`
     })
-    return `${WORDS[this.lang].define} ${text}`
+    const { define, defineSuffix } = this.lang.words
+    return [define, text, defineSuffix].filter(Boolean).join(' ')
   }
 
   /** a block as text, without its substacks */
@@ -811,8 +769,14 @@ class ScriptWriter {
 
     const spec = BLOCKS[op]
     if (!spec) this.unsupported(op)
-    const args = spec.args.map((arg) => this.arg(op, arg, block))
-    return specText(spec.sb, this.lang).replace(/%(\d+)/g, (_, n) => args[Number(n) - 1] ?? '')
+    const fill = (text: string, english: boolean) => {
+      const args = spec.args.map((arg) => this.arg(op, arg, block, english))
+      return text.replace(/%(\d+)/g, (_, n) => args[Number(n) - 1] ?? '')
+    }
+    const line = fill(this.lang.specText(spec.sb), false)
+    if (this.lang.code === 'en' || this.lang.readsAs(line, spec.sb)) return line
+    // ambiguous or unreadable in this language: English is always understood
+    return fill(this.lang.englishSpecText(spec.sb), true)
   }
 
   private call(block: any): string {
@@ -834,24 +798,23 @@ class ScriptWriter {
     return boolean ? `<${text}>` : `(${text})`
   }
 
-  private arg(opcode: string, arg: ArgSpec, block: any): string {
+  private arg(opcode: string, arg: ArgSpec, block: any, english = false): string {
     if (arg.kind === 'field') {
       const [value] = block.fields[arg.name] ?? ['']
-      const menu = MENUS[`${opcode}.${arg.name}`]
-      const text = menu?.[this.lang][value] ?? value
-      return `[${escape(text)} v]`
+      const key = `${opcode}.${arg.name}`
+      return `[${escape(english ? this.lang.englishMenuText(key, value) : this.lang.menuText(key, value))} v]`
     }
-    return this.inputText(arg, block.inputs[arg.name])
+    return this.inputText(arg, block.inputs[arg.name], english)
   }
 
-  private inputText(arg: ArgSpec, input: any[] | undefined): string {
+  private inputText(arg: ArgSpec, input: any[] | undefined, english = false): string {
     if (!input) return arg.shadow ? this.primitiveText(arg, '') : '<>'
     const [, value] = input
 
     // [1, primitive] / [1, shadowId] / [2|3, blockId|variable, shadow]
     if (input[0] === 1) {
       if (Array.isArray(value)) return this.compact(arg, value)
-      return this.menuText(this.blocks[value])
+      return this.menuText(this.blocks[value], english)
     }
     if (Array.isArray(value)) return this.compact(arg, value)
     return this.wrap(this.blocks[value], 'reporter')
@@ -873,13 +836,12 @@ class ScriptWriter {
     return `(${escape(value)})`
   }
 
-  private menuText(shadow: any): string {
+  private menuText(shadow: any, english = false): string {
     if (!shadow) return '()'
     const [fieldName] = Object.keys(shadow.fields)
     const [value] = shadow.fields[fieldName] ?? ['']
-    const menu = MENUS[`${shadow.opcode}.${fieldName}`]
-    const text = menu?.[this.lang][value] ?? value
-    return `(${escape(text)} v)`
+    const key = `${shadow.opcode}.${fieldName}`
+    return `(${escape(english ? this.lang.englishMenuText(key, value) : this.lang.menuText(key, value))} v)`
   }
 }
 
@@ -901,28 +863,36 @@ function assetKeys(assets: any[], what: string): string[] {
 
 function formatValue(v: any): string {
   const s = String(v)
-  if (/[,;=]/.test(s)) throw new Error(`cannot be written as text: value ${s}`)
+  if (/[,;=*]/.test(s)) throw new Error(`cannot be written as text: value ${s}`)
   return s
 }
 
-function propertyLines(target: any, lang: Lang, monitors: string[]): string[] {
-  const key = (id: string) => PROPERTIES[id][lang]
+/** "robo-a, robo-b*" — the star marks the current costume (if not the first) */
+function costumeList(keys: string[], current: number) {
+  return keys.map((k, i) => (i === current && current > 0 ? `${k}*` : k)).join(', ')
+}
+
+function propertyLines(target: any, lang: TextLanguage, monitors: string[]): string[] {
+  const key = (id: Property) => lang.word(id)
   const lines: string[] = []
   const lib = SPRITES[DEFAULT_SPRITE]
-  const words = WORDS[lang]
+  const words = lang.words
 
   if (target.isStage) {
     const backdrops = assetKeys(target.costumes, 'backdrop')
-    if (!sameList(backdrops, [DEFAULT_BACKDROP])) lines.push(`${key('backdrops')}: ${backdrops.join(', ')}`)
-    if (target.currentCostume) lines.push(`${key('backdrop')}: ${backdrops[target.currentCostume]}`)
+    if (!sameList(backdrops, [DEFAULT_BACKDROP]) || target.currentCostume) {
+      lines.push(`${key('backdrops')}: ${costumeList(backdrops, target.currentCostume)}`)
+    }
     if (target.sounds.length) lines.push(`${key('sounds')}: ${assetKeys(target.sounds, 'sound').join(', ')}`)
   } else {
     const costumes = assetKeys(target.costumes, 'costume')
-    if (!sameList(costumes, lib.costumes)) lines.push(`${key('costumes')}: ${costumes.join(', ')}`)
-    if (target.currentCostume) lines.push(`${key('costume')}: ${costumes[target.currentCostume]}`)
+    if (!sameList(costumes, lib.costumes) || target.currentCostume) {
+      lines.push(`${key('costumes')}: ${costumeList(costumes, target.currentCostume)}`)
+    }
     const sounds = assetKeys(target.sounds, 'sound')
     if (!sameList(sounds, lib.sounds)) lines.push(`${key('sounds')}: ${sounds.join(', ')}`)
-    if (target.x || target.y) lines.push(`${key('position')}: ${round(target.x)}, ${round(target.y)}`)
+    if (target.x) lines.push(`x: ${round(target.x)}`)
+    if (target.y) lines.push(`y: ${round(target.y)}`)
     if (target.direction !== 90) lines.push(`${key('direction')}: ${round(target.direction)}`)
     if (target.size !== 100) lines.push(`${key('size')}: ${round(target.size)}`)
     if (target.visible === false) lines.push(`${key('visible')}: ${words.no}`)
@@ -945,7 +915,7 @@ function propertyLines(target: any, lang: Lang, monitors: string[]): string[] {
         .join('; ')}`
     )
   }
-  if (monitors.length) lines.push(`${key('show')}: ${monitors.join(', ')}`)
+  if (monitors.length) lines.push(`${key('monitors')}: ${monitors.join(', ')}`)
   return lines
 }
 
@@ -954,7 +924,7 @@ function round(n: number) {
 }
 
 export function stringifyScratchText(project: ProjectJSON, options: TextOptions): string {
-  const lang = options.lang
+  const lang = textLanguage(resolveLang(options.lang))
   const stage = project.targets.find((t) => t.isStage)
   const sprites = project.targets.filter((t) => !t.isStage).sort((a, b) => (a.layerOrder ?? 0) - (b.layerOrder ?? 0))
 
@@ -988,22 +958,21 @@ export function stringifyScratchText(project: ProjectJSON, options: TextOptions)
   const lib = SPRITES[DEFAULT_SPRITE]
   const headless =
     spriteSections.length === 1 &&
-    spriteSections[0].target.name === lib.name[lang] &&
+    spriteSections[0].target.name === lib.name &&
     spriteSections[0].props.length === 0 &&
     stageSection.props.length === 0 &&
     stageSection.scripts.length === 0
 
   if (headless) return spriteSections[0].scripts.join('\n\n')
 
-  const words = WORDS[lang]
   const parts: string[] = []
   const emit = (header: string, section: (typeof sections)[number]) => {
     const block = [header, ...section.props]
     parts.push([block.join('\n'), ...section.scripts].join('\n\n'))
   }
   if (stageSection.props.length || stageSection.scripts.length || !spriteSections.length) {
-    emit(`[${words.stage}]`, stageSection)
+    emit(`[${lang.word('stage')}]`, stageSection)
   }
-  for (const section of spriteSections) emit(`[${words.sprite} ${section.target.name}]`, section)
+  for (const section of spriteSections) emit(`[${lang.word('sprite')} ${section.target.name}]`, section)
   return parts.join('\n\n')
 }

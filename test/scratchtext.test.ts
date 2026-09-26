@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from 'vitest'
 vi.mock('../src/engine', () => {
   const byKey = new Map<string, string>()
   const byMd5 = new Map<string, string>()
-  for (const key of ['robo-a', 'robo-b', 'weiss', 'plopp', 'piep']) {
+  for (const key of ['robo-a', 'robo-b', 'white', 'pop', 'beep']) {
     byKey.set(key, 'md5-' + key)
     byMd5.set('md5-' + key, key)
   }
@@ -19,11 +19,11 @@ vi.mock('../src/assets/library', async () => {
   const wav = (key: string) => ({ key, dataFormat: 'wav', data: new Uint8Array(), rate: 22050, sampleCount: 1 })
   return {
     COSTUMES: { 'robo-a': svg('robo-a'), 'robo-b': svg('robo-b') },
-    BACKDROPS: { weiss: { ...svg('weiss'), rotationCenterX: 240, rotationCenterY: 180 } },
-    SOUNDS: { plopp: wav('plopp'), piep: wav('piep') },
-    SPRITES: { robo: { name: { de: 'Robo', en: 'Robo' }, costumes: ['robo-a', 'robo-b'], sounds: ['plopp'] } },
+    BACKDROPS: { white: { ...svg('white'), rotationCenterX: 240, rotationCenterY: 180 } },
+    SOUNDS: { pop: wav('pop'), beep: wav('beep') },
+    SPRITES: { robo: { name: 'Robo', costumes: ['robo-a', 'robo-b'], sounds: ['pop'] } },
     DEFAULT_SPRITE: 'robo',
-    DEFAULT_BACKDROP: 'weiss',
+    DEFAULT_BACKDROP: 'white',
   }
 })
 
@@ -107,6 +107,23 @@ describe('parse', () => {
     expect(robo.blocks[hat.next].inputs.STEPS).toEqual([3, [12, 'Ecken', id], [4, '10']])
   })
 
+  it('marks the current costume with a star', () => {
+    const project = parseScratchText(['[Sprite Robo]', 'costumes: robo-a, robo-b*'].join('\n'), en)
+    expect(sprite(project).currentCostume).toBe(1)
+    expect(stringifyScratchText(project, en)).toBe(['[Sprite Robo]', 'costumes: robo-a, robo-b*'].join('\n'))
+  })
+
+  it('reads sections in other languages', () => {
+    const et = { lang: 'et' }
+    const text = stringifyScratchText(
+      parseScratchText(['[Sprite Robo]', 'x: 50', 'variables: punktid = 3', '', 'when green flag clicked', 'move (10) steps'].join('\n'), et),
+      et
+    )
+    expect(text).toContain('punktid = 3')
+    expect(text).toContain('x: 50')
+    expect(stringifyScratchText(parseScratchText(text, et), et)).toBe(text)
+  })
+
   it('reads sprite properties', () => {
     const project = parseScratchText(
       ['[Figur Käfer]', 'Kostüme: robo-b', 'Position: -100, 50', 'Richtung: 180', 'Größe: 50', 'Sichtbar: nein'].join('\n'),
@@ -169,7 +186,7 @@ describe('round trip', () => {
         'setze [Punkte v] auf (0)',
         '',
         '[Figur Robo]',
-        'Position: -100, 0',
+        'x: -100',
         'Listen: Wörter = Hallo, Welt',
         '',
         'Wenn diese Figur angeklickt wird',
@@ -261,27 +278,34 @@ describe('every block', async () => {
     const stage = {
       isStage: true, name: 'Stage', variables: { 'v-Wert': ['Wert', 0] }, lists: { 'v-Liste': ['Liste', []] },
       broadcasts: { 'v-Nachricht': 'Nachricht' }, blocks: {}, comments: {}, currentCostume: 0,
-      costumes: [{ name: 'weiss', assetId: 'md5-weiss' }], sounds: [], volume: 100, layerOrder: 0,
+      costumes: [{ name: 'white', assetId: 'md5-white' }], sounds: [], volume: 100, layerOrder: 0,
     }
     const robo = {
       isStage: false, name: 'Robo', variables: {}, lists: {}, broadcasts: {}, blocks, comments: {}, currentCostume: 0,
       costumes: [{ name: 'robo-a', assetId: 'md5-robo-a' }, { name: 'robo-b', assetId: 'md5-robo-b' }],
-      sounds: [{ name: 'plopp', assetId: 'md5-plopp' }], volume: 100, layerOrder: 1, visible: true, x: 0, y: 0,
+      sounds: [{ name: 'pop', assetId: 'md5-pop' }], volume: 100, layerOrder: 1, visible: true, x: 0, y: 0,
       size: 100, direction: 90, draggable: false, rotationStyle: 'all around',
     }
     return { targets: [stage, robo], monitors: [], extensions: opcode.startsWith('pen_') ? ['pen'] : [] }
   }
 
-  const skip = new Set(['control_else'])
-  for (const opcode of Object.keys(specs.blocks)) {
-    if (skip.has(opcode)) continue
-    for (const options of [de, en]) {
-      it(`${opcode} (${options.lang})`, () => {
-        const text = stringifyScratchText(build(opcode) as any, options)
-        const again = stringifyScratchText(parseScratchText(text, options), options)
-        expect(again).toBe(text)
-      })
-    }
+  const { LANGUAGES } = await import('../src/i18n')
+  for (const lang of LANGUAGES) {
+    it(`all blocks survive the text format (${lang})`, () => {
+      const failures: string[] = []
+      for (const opcode of Object.keys(specs.blocks)) {
+        const options = { lang }
+        let text = ''
+        try {
+          text = stringifyScratchText(build(opcode) as any, options)
+          const again = stringifyScratchText(parseScratchText(text, options), options)
+          if (again !== text) failures.push(`${opcode}:\n${text}\n→\n${again}`)
+        } catch (e: any) {
+          failures.push(`${opcode}: ${e.message}\n${text}`)
+        }
+      }
+      expect(failures).toEqual([])
+    })
   }
 })
 
@@ -292,8 +316,8 @@ describe('README examples', async () => {
 
   examples.forEach((text, i) => {
     it(`example ${i + 1} parses and is stable`, () => {
-      const once = stringifyScratchText(parseScratchText(text, de), de)
-      expect(stringifyScratchText(parseScratchText(once, de), de)).toBe(once)
+      const once = stringifyScratchText(parseScratchText(text, en), en)
+      expect(stringifyScratchText(parseScratchText(once, en), en)).toBe(once)
     })
   })
 })

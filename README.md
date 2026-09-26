@@ -2,18 +2,18 @@
 author:   André Dietrich
 email:    LiaScript@web.de
 version:  0.1.0
-language: de
-narrator: Deutsch Female
-comment:  Echtes Scratch 3 in LiaScript: Blöcke und Bühne überlagern den
-          Code-Editor, das Projekt bleibt Text im Codeblock – mit ▶, ⏹ und
-          LiaScripts Versionsgeschichte. Mit Profilen für Klasse 1 bis 13 und
-          automatisch geprüften Aufgaben.
+language: en
+narrator: US English Female
+comment:  Real Scratch 3 in LiaScript: blocks and stage overlay the code editor,
+          while the project stays text in the code block – with ▶, ⏹ and
+          LiaScript's version history. In all languages Scratch supports, with
+          profiles for grades 1 to 13 and automatically checked tasks.
 
 script:   dist/index.js
 
 attribute: [Scratch](https://scratch.mit.edu) (scratch-vm, scratch-render,
-           scratch-storage) by the Scratch Foundation is licensed under
-           [AGPL-3.0](https://www.gnu.org/licenses/agpl-3.0.html)
+           scratch-storage, scratch-l10n) by the Scratch Foundation is licensed
+           under [AGPL-3.0](https://www.gnu.org/licenses/agpl-3.0.html)
 
 attribute: [scratch-blocks](https://github.com/scratchfoundation/scratch-blocks)
            by the Scratch Foundation is licensed under
@@ -23,14 +23,20 @@ attribute: [scratchblocks](https://github.com/scratchblocks/scratchblocks)
            by Tim Radvan is licensed under
            [MIT](https://opensource.org/licenses/MIT)
 
-@Scratch:        @Scratch._run(@uid,stufe4)
-@Scratch.stufe1: @Scratch._run(@uid,stufe1)
-@Scratch.stufe2: @Scratch._run(@uid,stufe2)
-@Scratch.stufe3: @Scratch._run(@uid,stufe3)
-@Scratch.stufe4: @Scratch._run(@uid,stufe4)
-@Scratch.profil: @Scratch._run(@uid,@0)
+@Scratch:         @Scratch._run(@uid,level4)
+@Scratch.level1:  @Scratch._run(@uid,level1)
+@Scratch.level2:  @Scratch._run(@uid,level2)
+@Scratch.level3:  @Scratch._run(@uid,level3)
+@Scratch.level4:  @Scratch._run(@uid,level4)
+@Scratch.profile: @Scratch._run(@uid,@0)
 
-@Scratch.check:  @Scratch._check(@uid,@0)
+@Scratch.stufe1:  @Scratch._run(@uid,level1)
+@Scratch.stufe2:  @Scratch._run(@uid,level2)
+@Scratch.stufe3:  @Scratch._run(@uid,level3)
+@Scratch.stufe4:  @Scratch._run(@uid,level4)
+@Scratch.profil:  @Scratch._run(@uid,@0)
+
+@Scratch.check:   @Scratch._check(@uid,@0)
 
 @Scratch._run
 <script>
@@ -43,7 +49,7 @@ window.LiaScratch.run("@0", send, "@'input", "@1")
 @Scratch._check
 <script>
 window.LiaScratch.check("@0", send, "@'input(0)", "@1", async function (api) {
-  const { lauf, erwarte, figur, buehne, bloecke, run, expect, sprite, stage, blocks } = api
+  const { run, expect, sprite, stage, blocks, lauf, erwarte, figur, buehne, bloecke } = api
 @input(1)
 })
 </script>
@@ -55,220 +61,251 @@ window.LiaScratch.check("@0", send, "@'input(0)", "@1", async function (api) {
 # Scratch
 
     --{{0}}--
-Mit diesem Template wird aus einem LiaScript-Codeblock ein echtes Scratch-3-Projekt.
+This template turns a LiaScript code block into a real Scratch 3 project.
 
-Hänge `@Scratch` an einen Codeblock – und statt des Texteditors erscheinen
-Blöcke und Bühne von Scratch:
+Attach `@Scratch` to a code block – and instead of the text editor you get the
+blocks and the stage of Scratch:
 
-* **▶** startet das Projekt (wie die grüne Flagge), **⏹** hält es an.
-* Jeder Start mit Änderungen legt eine **neue Version** an. Mit den Pfeilen
-  unter dem Projekt springst du zwischen deinen Versionen hin und her.
-* Das Projekt selbst bleibt **Text im Codeblock** – lesbar, von Lehrkräften
-  direkt schreibbar und auch ohne Scratch verständlich.
+* **▶** starts the project (like the green flag), **⏹** stops it.
+* Every start with changes creates a **new version**. Use the arrows below the
+  project to go back and forth between your versions.
+* The project itself stays **text in the code block** – readable, easy to
+  write for teachers, and understandable even without Scratch.
+* Blocks, menus and texts follow the **language of the course** – in all
+  languages Scratch supports.
 
 ``` scratch
-Wenn die grüne Flagge angeklickt
-wiederhole (4) mal
-  gehe (80) er Schritt
-  drehe dich nach rechts um (90) Grad
-  warte (0.5) Sekunden
-Ende
+when green flag clicked
+repeat (4)
+  move (80) steps
+  turn right (90) degrees
+  wait (0.5) seconds
+end
 ```
 @Scratch
 
-> Scratch ist ein Projekt der Scratch Foundation, in Zusammenarbeit mit der
-> Lifelong Kindergarten Group am MIT Media Lab. Dieses Template ist kein
-> offizielles Scratch-Produkt; es nutzt die frei lizenzierten Scratch-Bausteine.
+> Scratch is a project of the Scratch Foundation, in collaboration with the
+> Lifelong Kindergarten Group at the MIT Media Lab. This template is not an
+> official Scratch product; it uses the freely licensed Scratch components.
 
-## Einbinden
+## Import
 
-Um das Template in einem eigenen Kurs zu nutzen, füge eine der folgenden
-Zeilen in den Kopf deines Kurses ein.
+To use the template in your own course, add one of the following lines to the
+header of your course.
 
-Feste Version (empfohlen, ändert sich nicht mehr):
+Fixed version (recommended, will not change anymore):
 
 `import: https://raw.githubusercontent.com/LiaTemplates/Scratch/0.1.0/README.md`
 
-Neueste Version (kann sich jederzeit ändern):
+Latest version (may change at any time):
 
 `import: https://raw.githubusercontent.com/LiaTemplates/Scratch/main/README.md`
 
-Danach genügt ein Codeblock mit einem der Makros:
+Then attach one of the macros to a code block:
 
-| Makro            | für            | Blöcke                                                         |
-| ---------------- | -------------- | -------------------------------------------------------------- |
-| `@Scratch.stufe1` | Klasse 1–2     | 8 große Blöcke, eine Figur, Vorlesen                           |
-| `@Scratch.stufe2` | Klasse 3–4     | Ereignisse, Bewegung, Aussehen, Klang, einfache Steuerung      |
-| `@Scratch.stufe3` | Klasse 5–7     | alles außer Listen, eigenen Blöcken und Klonen; mehrere Figuren |
-| `@Scratch.stufe4` | ab Klasse 8    | voller Scratch-Umfang, sb3-Import/-Export                      |
-| `@Scratch`        | = `stufe4`     |                                                                |
-| `@Scratch.profil(name)` | eigenes Profil | siehe [Eigene Profile](#eigene-profile)                 |
-| `@Scratch.check(stufe)` | Aufgaben   | Projekt + versteckte Prüfung, siehe [Aufgaben mit Prüfung](#aufgaben-mit-prüfung) |
+| Macro                    | for          | Blocks                                                           |
+| ------------------------ | ------------ | ---------------------------------------------------------------- |
+| `@Scratch.level1`        | grades 1–2   | 8 large blocks, one sprite, read aloud                           |
+| `@Scratch.level2`        | grades 3–4   | events, motion, looks, sound, simple control                     |
+| `@Scratch.level3`        | grades 5–7   | everything except lists, custom blocks and clones; many sprites  |
+| `@Scratch.level4`        | grade 8 on   | all of Scratch, sb3 import and export                            |
+| `@Scratch`               | = `level4`   |                                                                  |
+| `@Scratch.profile(name)` | own profile  | see [Custom profiles](#custom-profiles)                          |
+| `@Scratch.check(level)`  | tasks        | project + hidden check, see [Tasks with checks](#tasks-with-checks) |
 
-## So funktioniert es
+The German names `@Scratch.stufe1` … `@Scratch.stufe4` and
+`@Scratch.profil(name)` work as well.
+
+## How it works
 
     --{{0}}--
-Die Scratch-Oberfläche liegt über dem Codeblock. Gespeichert wird aber immer
-der Text im Codeblock.
+The Scratch interface lies on top of the code block. What is stored, however,
+is always the text in the code block.
 
-1. **Blöcke ziehen** – jede Änderung wird sofort als Text in den Codeblock
-   geschrieben. Über den Knopf **Text** (ab Stufe 3) kannst du ihn ansehen.
-2. **▶ drücken** – das Projekt startet. Alle Figuren beginnen dabei an ihrer
-   **Startposition**; so läuft ein Programm bei jedem Start gleich ab.
-3. **Startposition ändern** – ziehe eine Figur auf der Bühne an eine andere
-   Stelle, solange das Projekt nicht läuft.
-4. **Versionen** – mit ◀ und ▶ unter dem Projekt holst du frühere Versionen
-   zurück. Blöcke und Bühne springen mit.
+1. **Drag blocks** – every change is written into the code block right away.
+   With the **Text** button (from level 3 on) you can look at it.
+2. **Press ▶** – the project starts. All sprites begin at their **start
+   position**, so a program runs the same way every time.
+3. **Change the start position** – drag a sprite to another place on the stage
+   while the project is not running.
+4. **Versions** – with ◀ and ▶ below the project you get earlier versions
+   back. Blocks and stage follow along.
 
-Wenn der Codeblock leer ist, beginnt das Projekt mit einer weißen Bühne und
-der Figur _Robo_.
+If the code block is empty, the project starts with a white stage and the
+sprite _Robo_.
 
 ``` scratch
 ```
 @Scratch
 
-## Jahrgangsstufen
+## Levels
 
     --{{0}}--
-Für jede Altersstufe gibt es ein eigenes Profil. Es legt fest, welche Blöcke
-angeboten werden und wie groß sie sind.
+There is a profile for every age group. It defines which blocks are offered
+and how large they are.
 
-Die Profile bauen aufeinander auf. Ein Projekt aus Stufe 1 läuft also auch in
-Stufe 4 – nur mit mehr Blöcken zur Auswahl.
+The profiles build on each other: a project from level 1 also runs in level 4,
+just with more blocks to choose from.
 
-### Stufe 1 – Klasse 1 und 2
+### Level 1 – grades 1 and 2
 
-Wenige, große Blöcke und eine einzige Figur. Tippe auf einen Block in der
-Leiste, um ihn vorlesen zu lassen.
+Few, large blocks and a single sprite. Tap a block in the palette to hear it
+read aloud.
 
-**Aufgabe:** Lass Robo ein Quadrat laufen.
-
-``` scratch
-Wenn die grüne Flagge angeklickt
-gehe (80) er Schritt
-drehe dich nach rechts um (90) Grad
-```
-@Scratch.stufe1
-
-### Stufe 2 – Klasse 3 und 4
-
-Dazu kommen Tasten und Mausklicks, fortlaufende Wiederholungen, einfache
-Bedingungen und Klänge.
-
-**Aufgabe:** Steuere Robo mit den Pfeiltasten. Klicke dafür zuerst auf die
-Bühne.
+**Task:** Let Robo walk a square.
 
 ``` scratch
-Wenn Taste [Pfeil nach rechts v] gedrückt wird
-ändere x um (10)
-
-Wenn Taste [Pfeil nach links v] gedrückt wird
-ändere x um (-10)
+when green flag clicked
+move (80) steps
+turn right (90) degrees
 ```
-@Scratch.stufe2
+@Scratch.level1
 
-### Stufe 3 – Klasse 5 bis 7
+### Level 2 – grades 3 and 4
 
-Variablen, Operatoren, Fühlen, Nachrichten und der Malstift. Es können mehrere
-Figuren angelegt werden.
+Adds keys and mouse clicks, forever loops, simple conditions and sounds.
 
-**Aufgabe:** Robo zeichnet ein Vieleck. Ändere die Anzahl der Ecken.
+**Task:** Steer Robo with the arrow keys. Click on the stage first.
 
 ``` scratch
-[Figur Robo]
-Variablen: Ecken = 6
+when [right arrow v] key pressed
+change x by (10)
 
-Wenn die grüne Flagge angeklickt
-lösche alles
-schalte Stift ein
-wiederhole (Ecken) mal
-  gehe (60) er Schritt
-  drehe dich nach rechts um ((360) / (Ecken)) Grad
-Ende
-schalte Stift aus
+when [left arrow v] key pressed
+change x by (-10)
 ```
-@Scratch.stufe3
+@Scratch.level2
 
-### Stufe 4 – ab Klasse 8
+### Level 3 – grades 5 to 7
 
-Der volle Umfang von Scratch mit Listen, eigenen Blöcken und Klonen. Projekte
-lassen sich als `.sb3` laden und speichern.
+Variables, operators, sensing, broadcasts and the pen. More sprites can be
+added.
+
+**Task:** Robo draws a polygon. Change the number of corners.
 
 ``` scratch
-[Figur Robo]
-Listen: Wörter = Hallo, LiaScript, Scratch
+[Sprite Robo]
+variables: corners = 6
 
-Definiere sage alle Wörter
-setze [i v] auf (1)
-wiederhole (Länge von [Wörter v]) mal
-  sage (Element (i) von [Wörter v]) für (1) Sekunden
-  ändere [i v] um (1)
-Ende
-
-Wenn die grüne Flagge angeklickt
-sage alle Wörter
+when green flag clicked
+erase all
+pen down
+repeat (corners)
+  move (60) steps
+  turn right ((360) / (corners)) degrees
+end
+pen up
 ```
-@Scratch.stufe4
+@Scratch.level3
 
-## Das Textformat
+### Level 4 – grade 8 on
+
+All of Scratch with lists, custom blocks and clones. Projects can be loaded
+and saved as `.sb3`.
+
+``` scratch
+[Sprite Robo]
+lists: words = Hello, LiaScript, Scratch
+
+define say all words
+set [i v] to (1)
+repeat (length of [words v])
+  say (item (i) of [words v]) for (1) seconds
+  change [i v] by (1)
+end
+
+when green flag clicked
+say all words
+```
+@Scratch.level4
+
+## Languages
 
     --{{0}}--
-Im Codeblock steht das Projekt in der Schreibweise von scratchblocks. Das ist
-dieselbe Schreibweise, die auch im Scratch-Wiki und im Scratch-Forum benutzt
-wird.
+The template speaks the language of your course: set `language:` in the
+header of your course, and blocks, menus, buttons and the text in the code
+block follow.
 
-Ein Projekt besteht aus Abschnitten für die Bühne und für jede Figur. Jeder
-Abschnitt beginnt mit einer Kopfzeile in eckigen Klammern, danach folgen
-Eigenschaften und schließlich die Skripte. Skripte werden durch Leerzeilen
-getrennt.
+All 80 languages Scratch supports are available, for example `de`, `fr`,
+`es`, `et`, `ar`, `ja` or `zh-cn`. English is the default and is always
+understood in the text as well, so you can write English text in any course.
+
+The same program in a course with `language: de` and with `language: et`:
+
+``` text
+Wenn die grüne Flagge angeklickt        kui klõpsata ⚑
+wiederhole (4) mal                      korda (4) korda
+  gehe (80) er Schritt                    liigu (80) punkti
+Ende                                    end
+```
+
+* Section headers and properties use Scratch's own words for _Stage_,
+  _Sprite_, _costumes_, _sounds_ … in that language; where Scratch has no
+  translation, the English word is used. `x:` and `y:` are the same in all
+  languages.
+* Where a block would be ambiguous in a language (e.g. the green flag without
+  a readable spelling), it is written with its symbol (⚑ ↻ ↺) or in English.
+* Button texts, dialogs and pen blocks come from Scratch's own translations.
+  The few texts of this template itself (e.g. the result of a check) exist in
+  English and German; other languages show them in English.
+
+## The text format
+
+    --{{0}}--
+The code block contains the project in scratchblocks notation – the same
+notation that is used in the Scratch Wiki and the Scratch forums.
+
+A project consists of sections for the stage and for every sprite. Each
+section starts with a header in square brackets, followed by properties and
+finally the scripts. Scripts are separated by empty lines.
 
 ``` scratch
-[Bühne]
-Hintergründe: weiss
-Variablen: Punkte = 0
+[Stage]
+backdrops: white
+variables: score = 0
 
-Wenn die grüne Flagge angeklickt
-setze [Punkte v] auf (0)
+when green flag clicked
+set [score v] to (0)
 
-[Figur Robo]
-Kostüme: robo-a, robo-b
-Klänge: plopp
-Position: -100, 0
-Richtung: 90
-Größe: 100
+[Sprite Robo]
+costumes: robo-a, robo-b
+sounds: pop
+x: -100
+direction: 90
+size: 100
 
-Wenn diese Figur angeklickt wird
-ändere [Punkte v] um (1)
-spiele Klang [plopp v]
-wechsle zum nächsten Kostüm
+when this sprite clicked
+change [score v] by (1)
+play sound [pop v]
+next costume
 ```
 @Scratch
 
-| Eigenschaft     | Bedeutung                                        | Standard      |
-| --------------- | ------------------------------------------------ | ------------- |
-| `Kostüme:`      | Kostüme aus der [Bibliothek](#figuren-und-klänge) | `robo-a, robo-b` |
-| `Hintergründe:` | Hintergründe der Bühne                           | `weiss`       |
-| `Klänge:`       | Klänge aus der Bibliothek                        | `plopp`       |
-| `Position:`     | Startposition `x, y`                             | `0, 0`        |
-| `Richtung:`     | Startrichtung in Grad                            | `90`          |
-| `Größe:`        | Größe in Prozent                                 | `100`         |
-| `Sichtbar:`     | `ja` oder `nein`                                 | `ja`          |
-| `Variablen:`    | `Name = Startwert`, durch Kommas getrennt        |               |
-| `Listen:`       | `Name = Wert, Wert, …`                           |               |
+| Property      | Meaning                                                     | Default          |
+| ------------- | ----------------------------------------------------------- | ---------------- |
+| `costumes:`   | costumes from the [library](#sprites-and-sounds); a `*` marks the current one, e.g. `robo-a, robo-b*` | `robo-a, robo-b` |
+| `backdrops:`  | backdrops of the stage, `*` marks the current one            | `white`          |
+| `sounds:`     | sounds from the library                                     | `pop`            |
+| `x:`, `y:`    | start position                                              | `0`              |
+| `direction:`  | start direction in degrees                                  | `90`             |
+| `size:`       | size in percent                                             | `100`            |
+| `visible:`    | `yes` or `no`                                               | `yes`            |
+| `draggable:`  | can the sprite be dragged while the project runs?           | `no`             |
+| `variables:`  | `name = start value`, separated by commas                   |                  |
+| `lists:`      | `name = value, value, …`, several lists separated by `;`    |                  |
+| `monitors:`   | variables shown on the stage                                |                  |
 
-Fehlen die Kopfzeilen, gehören alle Skripte zur Figur _Robo_ auf einer weißen
-Bühne. Englische Schreibweise (`[Stage]`, `[Sprite Robo]`, `costumes:`,
-`when green flag clicked` …) wird ebenfalls verstanden.
+Without headers, all scripts belong to the sprite _Robo_ on a white stage.
 
-### Projekte als project.json
+### Projects as project.json
 
     --{{0}}--
-Manche Projekte lassen sich nicht vollständig als Text schreiben, zum Beispiel
-wenn sie eigene Bilder oder Aufnahmen enthalten.
+Some projects cannot be written completely as text, for example when they
+contain their own images or recordings.
 
-Dann kann der Codeblock auch das `project.json` von Scratch enthalten. Ein
-Projekt, das mit **sb3 laden** geöffnet wird, erscheint automatisch in dieser
-Form; eigene Bilder und Klänge werden darin eingebettet.
+In that case the code block can also contain Scratch's `project.json`. A
+project opened with **Load sb3** automatically appears in this form; its own
+images and sounds are embedded.
 
 ``` json
 {
@@ -282,7 +319,7 @@ Form; eigene Bilder und Klänge werden darin eingebettet.
       "blocks": {},
       "comments": {},
       "currentCostume": 0,
-      "costumes": [{ "name": "weiss", "asset": "weiss" }],
+      "costumes": [{ "name": "white", "asset": "white" }],
       "sounds": [],
       "volume": 100,
       "layerOrder": 0,
@@ -299,12 +336,12 @@ Form; eigene Bilder und Klänge werden darin eingebettet.
       "broadcasts": {},
       "blocks": {
         "a": {"opcode":"event_whenflagclicked","next":"b","parent":null,"inputs":{},"fields":{},"shadow":false,"topLevel":true,"x":0,"y":0},
-        "b": {"opcode":"looks_sayforsecs","next":null,"parent":"a","inputs":{"MESSAGE":[1,[10,"Hallo!"]],"SECS":[1,[4,"2"]]},"fields":{},"shadow":false,"topLevel":false}
+        "b": {"opcode":"looks_sayforsecs","next":null,"parent":"a","inputs":{"MESSAGE":[1,[10,"Hello!"]],"SECS":[1,[4,"2"]]},"fields":{},"shadow":false,"topLevel":false}
       },
       "comments": {},
       "currentCostume": 0,
       "costumes": [{ "name": "robo-a", "asset": "robo-a" }, { "name": "robo-b", "asset": "robo-b" }],
-      "sounds": [{ "name": "plopp", "asset": "plopp" }],
+      "sounds": [{ "name": "pop", "asset": "pop" }],
       "volume": 100,
       "layerOrder": 1,
       "visible": true,
@@ -322,62 +359,62 @@ Form; eigene Bilder und Klänge werden darin eingebettet.
 ```
 @Scratch
 
-## Aufgaben mit Prüfung
+## Tasks with checks
 
     --{{0}}--
-Eine Aufgabe besteht aus zwei Codeblöcken direkt untereinander: dem
-Scratch-Projekt und einer versteckten Prüfung in JavaScript.
+A task consists of two code blocks directly below each other: the Scratch
+project and a hidden check written in JavaScript.
 
-Die Prüfung beginnt mit einem Minus vor dem Dateinamen (`-Prüfung`), damit sie
-zugeklappt bleibt. Beim Drücken von ▶ läuft zuerst das Projekt, danach die
-Prüfung. Das Ergebnis erscheint unter dem Projekt.
+The check starts with a minus in front of its file name (`-Check`), so it
+stays collapsed. When ▶ is pressed, the check starts the project and then
+evaluates it. The result appears below the project.
 
-**Aufgabe:** Robo soll mindestens 150 Schritte nach rechts laufen und dafür
-eine Wiederholung benutzen – mit höchstens 4 Blöcken.
+**Task:** Robo should walk at least 150 steps to the right, using a repeat
+loop – with at most 4 blocks.
 
 ``` scratch
-Wenn die grüne Flagge angeklickt
-gehe (10) er Schritt
+when green flag clicked
+move (10) steps
 ```
-``` js -Prüfung
-await lauf(3)
+``` js -Check
+await run(3)
 
-erwarte(figur("Robo").x >= 150, "Robo soll mindestens 150 Schritte nach rechts laufen.")
-erwarte(bloecke.nutzt("control_repeat"), "Benutze eine Wiederholung.")
-erwarte(bloecke.anzahl() <= 4, "Schaffst du es mit höchstens 4 Blöcken?")
+expect(sprite("Robo").x >= 150, "Robo should walk at least 150 steps to the right.")
+expect(blocks.uses("control_repeat"), "Use a repeat loop.")
+expect(blocks.count() <= 4, "Can you do it with at most 4 blocks?")
 ```
-@Scratch.check(stufe1)
+@Scratch.check(level1)
 
-Diese Befehle stehen in der Prüfung zur Verfügung (englisch in Klammern):
+These commands are available in a check (German names in brackets):
 
-| Befehl                          | Bedeutung                                                     |
-| ------------------------------- | ------------------------------------------------------------- |
-| `await lauf(s)` (`run`)         | startet das Projekt und wartet höchstens `s` Sekunden          |
-| `erwarte(bedingung, text)` (`expect`) | meldet `text`, wenn die Bedingung nicht erfüllt ist     |
-| `figur(name)` (`sprite`)        | Zustand einer Figur: `x`, `y`, `richtung`, `größe`, `kostüm`, `sichtbar`, `sagt`, `variable(name)` |
-| `buehne` (`stage`)              | Zustand der Bühne: `hintergrund`, `variable(name)`, `liste(name)` |
-| `bloecke.anzahl()` (`blocks.count()`) | Anzahl der Blöcke im Projekt                            |
-| `bloecke.nutzt(opcode)` (`blocks.uses()`) | benutzt das Projekt diesen Block?                   |
+| Command                                     | Meaning                                                              |
+| ------------------------------------------- | -------------------------------------------------------------------- |
+| `await run(s)` (`lauf`)                     | starts the project and waits at most `s` seconds                     |
+| `expect(condition, text)` (`erwarte`)       | reports `text` if the condition is not met                           |
+| `sprite(name)` (`figur`)                    | state of a sprite: `x`, `y`, `direction`, `size`, `costume`, `visible`, `says`, `variable(name)`, `list(name)` |
+| `stage` (`buehne`)                          | state of the stage: `backdrop`, `variable(name)`, `list(name)`       |
+| `blocks.count()` (`bloecke.anzahl()`)       | number of blocks in the project                                      |
+| `blocks.uses(opcode)` (`bloecke.nutzt()`)   | does the project use this block?                                     |
 
-Die Namen der Blöcke (`control_repeat`, `motion_movesteps` …) findest du im
-[Scratch-Wiki](https://en.scratch-wiki.info/wiki/List_of_Block_Opcodes).
+The names of the blocks (`control_repeat`, `motion_movesteps` …) can be found
+in the [Scratch Wiki](https://en.scratch-wiki.info/wiki/List_of_Block_Opcodes).
 
-## Eigene Profile
+## Custom profiles
 
     --{{0}}--
-Reichen die vier Stufen nicht aus, kannst du im Kopf deines Kurses eigene
-Profile anlegen.
+If the four levels are not enough, you can define your own profiles in the
+header of your course.
 
-Ein Profil erweitert eine der Stufen. Die Liste `blocks` legt fest, welche
-Blöcke erlaubt sind; mit `maxBlocks` begrenzt du die Anzahl der Blöcke.
+A profile extends one of the levels. The list `blocks` defines which blocks
+are allowed; `maxBlocks` limits the number of blocks.
 
 ``` html
 <!--
 import: https://raw.githubusercontent.com/LiaTemplates/Scratch/0.1.0/README.md
 
 @onload
-window.LiaScratch.defineProfile("labyrinth", {
-  base: "stufe1",
+window.LiaScratch.defineProfile("maze", {
+  base: "level1",
   blocks: ["event_whenflagclicked", "motion_movesteps", "motion_turnright"],
   maxBlocks: 5
 })
@@ -385,95 +422,99 @@ window.LiaScratch.defineProfile("labyrinth", {
 -->
 ```
 
-Verwendet wird es mit `@Scratch.profil(labyrinth)`.
+Use it with `@Scratch.profile(maze)`.
 
-| Option       | Bedeutung                                          |
-| ------------ | -------------------------------------------------- |
-| `base`       | Stufe, auf der das Profil aufbaut                  |
-| `blocks`     | erlaubte Blöcke (Opcodes) oder `"all"`             |
-| `exclude`    | Blöcke, die entfernt werden                        |
-| `zoom`       | Größe der Blöcke (Stufe 1: `1.1`, Stufe 4: `0.675`) |
-| `sprites`    | dürfen Figuren hinzugefügt werden?                 |
-| `textView`   | Knopf **Text** anzeigen                            |
-| `sb3`        | Knöpfe zum Laden und Speichern von `.sb3`          |
-| `speech`     | Blöcke vorlesen                                    |
-| `maxBlocks`  | höchstens so viele Blöcke (`0` = unbegrenzt)       |
-| `resetOnRun` | Figuren bei ▶ an die Startposition setzen          |
+| Option       | Meaning                                              |
+| ------------ | ---------------------------------------------------- |
+| `base`       | level the profile builds on                          |
+| `blocks`     | allowed blocks (opcodes) or `"all"`                  |
+| `exclude`    | blocks to remove                                     |
+| `zoom`       | block size (level 1: `1.1`, level 4: `0.675`)        |
+| `sprites`    | may sprites be added?                                |
+| `textView`   | show the **Text** button                             |
+| `sb3`        | buttons to load and save `.sb3`                      |
+| `speech`     | read blocks aloud                                    |
+| `maxBlocks`  | at most this many blocks (`0` = unlimited)           |
+| `resetOnRun` | put sprites back to their start state on ▶           |
 
-## Figuren und Klänge
+## Sprites and sounds
 
     --{{0}}--
-Alle Figuren, Hintergründe und Klänge sind im Template enthalten. Sie
-funktionieren deshalb auch ohne Internet.
+All sprites, backdrops and sounds are part of the template, so they also work
+offline.
 
-| Name     | Art         |
-| -------- | ----------- |
-| `robo-a` | Kostüm      |
-| `robo-b` | Kostüm      |
-| `weiss`  | Hintergrund |
-| `plopp`  | Klang       |
-| `piep`   | Klang       |
+| Name     | Type     |
+| -------- | -------- |
+| `robo-a` | costume  |
+| `robo-b` | costume  |
+| `white`  | backdrop |
+| `pop`    | sound    |
+| `beep`   | sound    |
 
-Alle sind eigens für dieses Template erstellt und gemeinfrei
-([CC0](https://creativecommons.org/publicdomain/zero/1.0/)). Die
-Scratch-Katze wird bewusst nicht verwendet, sie ist eine Marke der Scratch
-Foundation.
+All of them were made for this template and are in the public domain
+([CC0](https://creativecommons.org/publicdomain/zero/1.0/)). The Scratch Cat is
+deliberately not used, it is a trademark of the Scratch Foundation.
 
-## Implementierung
+## Implementation
 
-Das Template ist ein npm-Projekt. Der Quelltext liegt in `src/`, Parcel bündelt
-ihn nach `dist/index.js`.
+The template is an npm project. The sources are in `src/`, Parcel bundles them
+into `dist/index.js`.
 
 ``` bash
-npm install        # Abhängigkeiten installieren (patcht scratch-vm für Parcel)
-npm run build      # dist/index.js erzeugen
-npm test           # Tests für das Textformat (alle Blöcke, de + en)
-npm run typecheck  # TypeScript prüfen
-npm run gen:specs  # src/format/specs.json neu erzeugen (nach Updates von scratch-blocks)
-npm run serve      # diesen Kurs lokal mit Live-Reload öffnen
+npm install        # install dependencies (patches scratch-vm for Parcel)
+npm run build      # create dist/index.js
+npm test           # tests for the text format (all blocks, all languages)
+npm run typecheck  # check TypeScript
+npm run gen        # regenerate src/format/specs.json and src/locales.json
+npm run serve      # open this course locally with live reload
 ```
 
-Aufbau von `src/`:
+Structure of `src/`:
 
-| Datei                   | Aufgabe                                                               |
-| ----------------------- | --------------------------------------------------------------------- |
-| `element.ts`            | `<lia-scratch>`: Oberfläche, ▶/⏹, Synchronisation                      |
-| `bridge.ts`             | Verbindung zum LiaScript-Codeblock (ACE lesen, schreiben, beobachten) |
-| `project.ts`            | Text ⇄ VM, Startzustand der Figuren                                   |
-| `format/scratchtext.ts` | lesbares Textformat (scratchblocks-Syntax)                            |
-| `format/json.ts`        | kompaktes `project.json`                                              |
-| `format/specs.json`     | aus scratch-blocks erzeugte Tabelle aller Blöcke und Menüs            |
-| `workspace.ts`          | scratch-blocks-Arbeitsfläche, Toolbox je Profil                       |
-| `stage.ts`              | Bühne: Maus, Tastatur, Figuren ziehen, „frage und warte“              |
-| `profiles.ts`           | Stufen 1–4 und eigene Profile                                         |
-| `check.ts`              | Befehle für Prüfungen                                                 |
-| `dom-guard.ts`          | hält fremde Knoten aus `<body>` fern (siehe unten)                    |
-| `vendor/scratch-gui/`   | Verbindungscode aus scratch-gui 15.1.1 (AGPL-3.0)                     |
+| File                    | Purpose                                                          |
+| ----------------------- | ---------------------------------------------------------------- |
+| `element.ts`            | `<lia-scratch>`: interface, ▶/⏹, synchronization                  |
+| `bridge.ts`             | connection to the LiaScript code block (read, write, observe ACE) |
+| `project.ts`            | text ⇄ VM, start state of the sprites                            |
+| `format/scratchtext.ts` | readable text format (scratchblocks notation)                    |
+| `format/language.ts`    | everything language-dependent in the text format                 |
+| `format/json.ts`        | compact `project.json`                                           |
+| `format/specs.json`     | table of all blocks and menus, generated from scratch-blocks     |
+| `locales.json`          | UI texts and keywords of all languages, generated from scratch-l10n |
+| `i18n.ts`               | language of the course, UI texts                                 |
+| `workspace.ts`          | scratch-blocks workspace, toolbox per profile                    |
+| `stage.ts`              | stage: mouse, keyboard, dragging sprites, "ask and wait"         |
+| `profiles.ts`           | levels 1–4 and custom profiles                                   |
+| `check.ts`              | commands for checks                                              |
+| `dom-guard.ts`          | keeps foreign nodes out of `<body>` (see below)                  |
+| `vendor/scratch-gui/`   | glue code from scratch-gui 15.1.1 (AGPL-3.0)                     |
 
-Hinweise:
+Notes:
 
-* LiaScript verwaltet die Kinder von `<body>` über ihren Index. Blockly,
-  scratch-render-fonts und scratch-vm hängen dort eigene Knoten an, was
-  LiaScripts Darstellung zerstört. `dom-guard.ts` verschiebt sie sofort nach
-  `<head>` bzw. in einen Container neben `<body>`.
-* Die Symbole der Blöcke (grüne Flagge, Pfeile) lädt scratch-blocks per URL.
-  Standard ist die feste Version auf jsDelivr. Für den Offline-Einsatz kann
-  `window.LiaScratchMedia` im `@onload` auf eine eigene Kopie des Ordners
-  `node_modules/scratch-blocks/media/` zeigen.
-* `dist/index.js` ist etwa 10 MB groß (4 MB komprimiert), davon entfallen
-  knapp 3 MB auf scratch-vm.
+* LiaScript manages the children of `<body>` by their index. Blockly,
+  scratch-render-fonts and scratch-vm add nodes of their own there, which
+  breaks LiaScript's rendering. `dom-guard.ts` moves them to `<head>` or into
+  a container next to `<body>` right away.
+* The run controls and versions of LiaScript are shown below the Scratch
+  interface. Both only swap their visual places (`position: relative`), no
+  node of LiaScript is moved.
+* scratch-blocks loads the icons of the blocks (green flag, arrows) by URL. By
+  default a fixed version on jsDelivr is used. For offline use, set
+  `window.LiaScratchMedia` in `@onload` to your own copy of the folder
+  `node_modules/scratch-blocks/media/`.
+* `dist/index.js` is about 11 MB (4 MB compressed), most of it scratch-vm.
 
-Die Makros im Kopf dieser Datei:
+The macros in the header of this file:
 
 ``` html
-@Scratch:        @Scratch._run(@uid,stufe4)
-@Scratch.stufe1: @Scratch._run(@uid,stufe1)
-@Scratch.stufe2: @Scratch._run(@uid,stufe2)
-@Scratch.stufe3: @Scratch._run(@uid,stufe3)
-@Scratch.stufe4: @Scratch._run(@uid,stufe4)
-@Scratch.profil: @Scratch._run(@uid,@0)
+@Scratch:         @Scratch._run(@uid,level4)
+@Scratch.level1:  @Scratch._run(@uid,level1)
+@Scratch.level2:  @Scratch._run(@uid,level2)
+@Scratch.level3:  @Scratch._run(@uid,level3)
+@Scratch.level4:  @Scratch._run(@uid,level4)
+@Scratch.profile: @Scratch._run(@uid,@0)
 
-@Scratch.check:  @Scratch._check(@uid,@0)
+@Scratch.check:   @Scratch._check(@uid,@0)
 
 @Scratch._run
 <script>
@@ -486,7 +527,7 @@ window.LiaScratch.run("@0", send, "@'input", "@1")
 @Scratch._check
 <script>
 window.LiaScratch.check("@0", send, "@'input(0)", "@1", async function (api) {
-  const { lauf, erwarte, figur, buehne, bloecke, run, expect, sprite, stage, blocks } = api
+  const { run, expect, sprite, stage, blocks, lauf, erwarte, figur, buehne, bloecke } = api
 @input(1)
 })
 </script>
@@ -495,9 +536,9 @@ window.LiaScratch.check("@0", send, "@'input(0)", "@1", async function (api) {
 @end
 ```
 
-Das Element `<lia-scratch>` sucht sich den Codeblock direkt davor, blendet
-dessen Editor aus und hält Blöcke, Bühne und Text synchron. Neue Versionen
-legt LiaScript selbst an, sobald ▶ gedrückt wird.
+The element `<lia-scratch>` finds the code block right before it, hides its
+editor and keeps blocks, stage and text in sync. New versions are created by
+LiaScript itself as soon as ▶ is pressed.
 
-Lizenz: [AGPL-3.0](LICENSE). Kurse, die dieses Template einbinden, können
-beliebig lizenziert werden.
+License: [AGPL-3.0](LICENSE). Courses that import this template can be
+licensed freely.

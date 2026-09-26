@@ -1,14 +1,16 @@
-// Generates src/format/specs.json — the table the text format is built on.
+// Generates the tables the template is built on. Run with: npm run gen
 //
-// Run with: npm run gen:specs
+// src/format/specs.json — for every block, in message order (the order of
+//   %1, %2 … in the Scratch/scratchblocks texts), the named inputs and fields
+//   with the shadow blocks the toolbox uses for them; for every static
+//   dropdown the internal values with their display texts in all languages.
 //
-// For every block it records, in message order (the order of %1, %2 … in the
-// Scratch/scratchblocks texts), the named inputs and fields, together with the
-// shadow blocks the toolbox uses for them. For every static dropdown it
-// records the internal values with their German and English display texts.
+// src/locales.json — per language the UI texts, pen extension texts and the
+//   keywords of the text format, taken from Scratch's own translations
+//   (scratch-l10n), so they read exactly like the Scratch editor.
 
 import { JSDOM } from 'jsdom'
-import { writeFileSync } from 'node:fs'
+import { readdirSync, readFileSync, writeFileSync } from 'node:fs'
 
 const dom = new JSDOM('<!doctype html><html><body></body></html>', { pretendToBeVisual: true })
 const g = globalThis as any
@@ -17,6 +19,14 @@ for (const k of ['window', 'document', 'navigator', 'DOMParser', 'XMLSerializer'
 }
 
 const SB: any = await import('scratch-blocks')
+
+const L10N = new URL('../node_modules/scratch-l10n/editor/', import.meta.url)
+const LANGUAGES = readdirSync(new URL('interface/', L10N))
+  .filter((f) => f.endsWith('.json'))
+  .map((f) => f.replace(/\.json$/, ''))
+  .filter((code) => code in SB.ScratchMsgs.locales || code === 'en')
+const l10n = (part: string, code: string): Record<string, string> =>
+  JSON.parse(readFileSync(new URL(`${part}/${code}.json`, L10N), 'utf8'))
 const commands: any[] = (await import('scratchblocks/syntax/commands.js')).default
 const { default: VMScratchBlocks } = await import('../src/vendor/scratch-gui/blocks.js')
 const { default: makeToolboxXML } = await import('../src/vendor/scratch-gui/make-toolbox-xml.js')
@@ -83,13 +93,7 @@ const PEN_ARGS: Record<string, any[]> = {
   pen_setPenShadeToNumber: [{ name: 'SHADE', kind: 'input', shadow: 'math_number', shadowField: 'NUM', default: '50' }],
 }
 
-const PEN_MENUS = {
-  'pen_menu_colorParam.colorParam': {
-    options: ['color', 'saturation', 'brightness', 'transparency'],
-    de: { color: 'Farbe', saturation: 'Sättigung', brightness: 'Helligkeit', transparency: 'Transparenz' },
-    en: { color: 'color', saturation: 'saturation', brightness: 'brightness', transparency: 'transparency' },
-  },
-}
+const PEN_COLOR_PARAMS = ['color', 'saturation', 'brightness', 'transparency']
 
 // --- shadows and defaults from the toolbox --------------------------------
 
@@ -187,16 +191,40 @@ function dropdownOptions(opcode: string, fieldName: string, locale: string): [st
 }
 
 const blocks: Record<string, any> = {}
-const menus: Record<string, any> = { ...PEN_MENUS }
+const menus: Record<string, any> = {}
+
+/**
+ * menus[key] = { options: [values], text: { en: {value: text}, <lang>: {…} } }
+ * — other languages only list the texts that differ from English.
+ */
+function addMenu(key: string, options: string[], texts: Record<string, Record<string, string>>) {
+  const entry: any = { options, text: { en: texts.en } }
+  for (const [code, t] of Object.entries(texts)) {
+    if (code === 'en') continue
+    const diff = Object.fromEntries(Object.entries(t).filter(([v, text]) => text && text !== texts.en[v]))
+    if (Object.keys(diff).length) entry.text[code] = diff
+  }
+  menus[key] = entry
+}
 
 function recordMenu(opcode: string, fieldName: string) {
   const en = dropdownOptions(opcode, fieldName, 'en')
-  const de = dropdownOptions(opcode, fieldName, 'de')
   if (!en?.length) return
-  const entry: any = { options: en.map((o) => o[1]), en: {}, de: {} }
-  for (const [text, value] of en) entry.en[value] = text
-  for (const [text, value] of de ?? []) entry.de[value] = text
-  menus[`${opcode}.${fieldName}`] = entry
+  const texts: Record<string, Record<string, string>> = {}
+  for (const code of LANGUAGES) {
+    texts[code] = {}
+    for (const [text, value] of dropdownOptions(opcode, fieldName, code) ?? []) texts[code][value] = text
+  }
+  addMenu(`${opcode}.${fieldName}`, en.map((o) => o[1]), texts)
+}
+
+{
+  const texts: Record<string, Record<string, string>> = {}
+  for (const code of LANGUAGES) {
+    const ext = l10n('extensions', code)
+    texts[code] = Object.fromEntries(PEN_COLOR_PARAMS.map((p) => [p, ext[`pen.colorMenu.${p}`] ?? p]))
+  }
+  addMenu('pen_menu_colorParam.colorParam', PEN_COLOR_PARAMS, texts)
 }
 
 for (const command of commands) {
@@ -229,3 +257,59 @@ blocks.control_if_else = { sb: 'CONTROL_IF', shape: 'c-block', ...describe('cont
 const out = new URL('../src/format/specs.json', import.meta.url)
 writeFileSync(out, JSON.stringify({ blocks, menus }, null, 1) + '\n')
 console.log(`${Object.keys(blocks).length} blocks, ${Object.keys(menus).length} menus → ${out.pathname}`)
+
+// --- UI texts, pen texts and text-format keywords per language -------------
+
+/** key in locales.json → key in scratch-l10n (interface or blocks) */
+const UI_KEYS: Record<string, string> = {
+  ok: 'gui.prompt.ok',
+  cancel: 'gui.prompt.cancel',
+  makeBlock: 'gui.customProcedures.myblockModalTitle',
+  addLabel: 'gui.customProcedures.addALabel',
+  runWithoutRefresh: 'gui.customProcedures.runWithoutScreenRefresh',
+  stage: 'gui.stageSelector.stage',
+  addSprite: 'gui.spriteSelector.addSpriteFromLibrary',
+  deleteSprite: 'gui.spriteSelectorItem.contextMenuDelete',
+  fullscreen: 'gui.stageHeader.stageSizeFull',
+  saveSb3: 'gui.menuBar.downloadToComputer',
+}
+
+const WORD_KEYS: Record<string, [string, string]> = {
+  stage: ['interface', 'gui.stageSelector.stage'],
+  sprite: ['interface', 'gui.SpriteInfo.sprite'],
+  costumes: ['interface', 'gui.gui.costumesTab'],
+  backdrops: ['interface', 'gui.gui.backdropsTab'],
+  sounds: ['interface', 'gui.gui.soundsTab'],
+  direction: ['interface', 'gui.SpriteInfo.direction'],
+  size: ['interface', 'gui.SpriteInfo.size'],
+  visible: ['interface', 'gui.SpriteInfo.show'],
+  draggable: ['blocks', 'SENSING_SETDRAGMODE_DRAGGABLE'],
+  variables: ['blocks', 'CATEGORY_VARIABLES'],
+}
+
+/** keywords must work as "Key: value" and inside "[Key Name]" */
+const usableWord = (w?: string) => (w && !/[:\[\]]/.test(w) ? w.trim() : undefined)
+
+const locales: Record<string, any> = {}
+for (const code of LANGUAGES) {
+  const ui = l10n('interface', code)
+  const blockMsgs = l10n('blocks', code)
+  const ext = l10n('extensions', code)
+  const entry: any = { ui: {}, pen: {}, words: {} }
+
+  for (const [key, id] of Object.entries(UI_KEYS)) if (ui[id]) entry.ui[key] = ui[id]
+  if (ui['gui.customProcedures.addAnInputNumberText']) {
+    entry.ui.addInput = `${ui['gui.customProcedures.addAnInputNumberText']} (${ui['gui.customProcedures.numberTextType']})`
+    entry.ui.addBoolean = `${ui['gui.customProcedures.addAnInputBoolean']} (${ui['gui.customProcedures.booleanType']})`
+  }
+  for (const [key, text] of Object.entries(ext)) if (key.startsWith('pen.')) entry.pen[key] = text
+  for (const [key, [part, id]] of Object.entries(WORD_KEYS)) {
+    const word = usableWord((part === 'interface' ? ui : blockMsgs)[id])
+    if (word) entry.words[key] = word
+  }
+  locales[code] = entry
+}
+
+const localesOut = new URL('../src/locales.json', import.meta.url)
+writeFileSync(localesOut, JSON.stringify(locales) + '\n')
+console.log(`${Object.keys(locales).length} languages → ${localesOut.pathname}`)
