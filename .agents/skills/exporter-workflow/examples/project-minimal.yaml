@@ -1,0 +1,17 @@
+title: My Course Collection
+
+comment: A collection of interactive LiaScript courses.
+
+logo: assets/logo.png
+
+footer: >
+  Made with <a href="https://liascript.github.io" target="_blank">LiaScript</a>
+
+meta:
+  title: My Course Collection
+  description: Interactive open educational resources made with LiaScript.
+
+collection:
+  - url: https://raw.githubusercontent.com/USERNAME/REPO/refs/heads/main/README.md
+  - url: https://raw.githubusercontent.com/USERNAME/REPO/refs/heads/main/lecture-2.md
+  - url: https://raw.githubusercontent.com/USERNAME/REPO/refs/heads/main/lecture-3.md

@@ -1,0 +1,1009 @@
+// Readable text format based on scratchblocks syntax (German or English).
+//
+//   [Bühne]                     ← optional section headers
+//   Variablen: Punkte = 0
+//
+//   Wenn die grüne Flagge angeklickt
+//   setze [Punkte v] auf (0)
+//
+//   [Figur Robo]
+//   Position: -100, 0
+//
+//   Wenn diese Figur angeklickt wird
+//   ändere [Punkte v] um (1)
+//
+// Without headers, all scripts belong to "Robo" on a white stage.
+// parseScratchText builds a project.json, stringifyScratchText writes it back.
+// Anything the text cannot express makes stringify throw (the caller then
+// falls back to the json format).
+
+import { loadLanguages, parse } from 'scratchblocks/syntax/index.js'
+import deLocale from 'scratchblocks/locales/de.json'
+import commands from 'scratchblocks/syntax/commands.js'
+import specs from './specs.json'
+import { expandProject, type ProjectJSON } from './json'
+import { defaultSpriteJSON, spriteJSON, stageJSON } from './default'
+import { DEFAULT_BACKDROP, DEFAULT_SPRITE, SPRITES } from '../assets/library'
+import { libraryIds } from '../engine'
+
+export interface TextOptions {
+  lang: 'de' | 'en'
+}
+
+type Lang = TextOptions['lang']
+
+interface ArgSpec {
+  name: string
+  kind: 'input' | 'field'
+  shadow?: string
+  shadowField?: string | null
+  default?: string
+  dropdown?: boolean
+  variable?: string
+}
+
+interface BlockSpec {
+  sb: string
+  shape: string
+  args: ArgSpec[]
+  statements: string[]
+}
+
+const BLOCKS = specs.blocks as Record<string, BlockSpec>
+const MENUS = specs.menus as Record<string, { options: string[]; en: Record<string, string>; de: Record<string, string> }>
+
+loadLanguages({ de: deLocale })
+
+/** scratchblocks id → opcode */
+const OPCODE_BY_SB: Record<string, string> = {}
+for (const [opcode, spec] of Object.entries(BLOCKS)) {
+  if (opcode !== 'control_if_else') OPCODE_BY_SB[spec.sb] = opcode
+}
+
+const ENGLISH_SPECS: Record<string, string> = {}
+for (const command of commands as any[]) if (command.id) ENGLISH_SPECS[command.id] = command.spec
+
+/** Readable spellings instead of icons (all are aliases scratchblocks parses). */
+const SPEC_OVERRIDES: Record<Lang, Record<string, string>> = {
+  de: {
+    EVENT_WHENFLAGCLICKED: 'Wenn die grüne Flagge angeklickt',
+    MOTION_TURNRIGHT: 'drehe dich nach rechts um %1 Grad',
+    MOTION_TURNLEFT: 'drehe dich nach links um %1 Grad',
+  },
+  en: {
+    EVENT_WHENFLAGCLICKED: 'when green flag clicked',
+    MOTION_TURNRIGHT: 'turn right %1 degrees',
+    MOTION_TURNLEFT: 'turn left %1 degrees',
+  },
+}
+
+const WORDS = {
+  de: { end: 'Ende', else: 'sonst', define: 'Definiere', stage: 'Bühne', sprite: 'Figur', yes: 'ja', no: 'nein' },
+  en: { end: 'end', else: 'else', define: 'define', stage: 'Stage', sprite: 'Sprite', yes: 'yes', no: 'no' },
+}
+
+/** property keys, first entry is the one that is written */
+const PROPERTIES: Record<string, { de: string; en: string; aliases: string[] }> = {
+  costumes: { de: 'Kostüme', en: 'costumes', aliases: ['kostueme'] },
+  costume: { de: 'Kostüm', en: 'costume', aliases: ['kostuem'] },
+  backdrops: { de: 'Hintergründe', en: 'backdrops', aliases: ['hintergruende'] },
+  backdrop: { de: 'Hintergrund', en: 'backdrop', aliases: [] },
+  sounds: { de: 'Klänge', en: 'sounds', aliases: ['klaenge'] },
+  position: { de: 'Position', en: 'position', aliases: [] },
+  direction: { de: 'Richtung', en: 'direction', aliases: [] },
+  size: { de: 'Größe', en: 'size', aliases: ['groesse'] },
+  visible: { de: 'Sichtbar', en: 'visible', aliases: [] },
+  draggable: { de: 'Ziehbar', en: 'draggable', aliases: [] },
+  rotation: { de: 'Drehtyp', en: 'rotation style', aliases: [] },
+  variables: { de: 'Variablen', en: 'variables', aliases: [] },
+  lists: { de: 'Listen', en: 'lists', aliases: [] },
+  show: { de: 'Anzeigen', en: 'show', aliases: [] },
+}
+
+const PROPERTY_BY_KEY = new Map<string, string>()
+for (const [id, p] of Object.entries(PROPERTIES)) {
+  for (const key of [p.de, p.en, ...p.aliases]) PROPERTY_BY_KEY.set(key.toLowerCase(), id)
+}
+
+const PRIMITIVES: Record<string, number> = {
+  math_number: 4,
+  math_positive_number: 5,
+  math_whole_number: 6,
+  math_integer: 7,
+  math_angle: 8,
+  colour_picker: 9,
+  text: 10,
+}
+const PRIMITIVE_TYPES = Object.fromEntries(Object.entries(PRIMITIVES).map(([k, v]) => [v, k]))
+
+// ---------------------------------------------------------------------------
+// parsing
+// ---------------------------------------------------------------------------
+
+export class TextError extends Error {
+  constructor(message: string, readonly line?: number) {
+    super(line ? `Zeile ${line}: ${message}` : message)
+  }
+}
+
+interface Section {
+  kind: 'stage' | 'sprite'
+  name: string
+  line: number
+  props: [string, string, number][]
+  code: string
+  codeLine: number
+}
+
+const HEADER = /^\s*\[\s*(bühne|buehne|stage|figur|sprite)(?:\s+(.*?))?\s*\]\s*$/i
+
+function splitSections(text: string, lang: Lang): Section[] {
+  const lines = text.replace(/\r\n?/g, '\n').split('\n')
+  const sections: Section[] = []
+  let current: Section | null = null
+  let inProps = false
+  const code: string[][] = []
+
+  lines.forEach((line, i) => {
+    const header = HEADER.exec(line)
+    if (header) {
+      const kind = /^(bühne|buehne|stage)$/i.test(header[1]) ? 'stage' : 'sprite'
+      current = {
+        kind,
+        name: kind === 'stage' ? 'Stage' : (header[2] || SPRITES[DEFAULT_SPRITE].name[lang]).trim(),
+        line: i + 1,
+        props: [],
+        code: '',
+        codeLine: i + 2,
+      }
+      sections.push(current)
+      code.push([])
+      inProps = true
+      return
+    }
+
+    if (!current) {
+      current = {
+        kind: 'sprite',
+        name: SPRITES[DEFAULT_SPRITE].name[lang],
+        line: 0,
+        props: [],
+        code: '',
+        codeLine: 1,
+      }
+      sections.push(current)
+      code.push([])
+      inProps = true
+    }
+
+    const prop = /^\s*([^:\[\]()<>]+?)\s*:\s*(.*)$/.exec(line)
+    if (inProps && prop && PROPERTY_BY_KEY.has(prop[1].toLowerCase())) {
+      current.props.push([PROPERTY_BY_KEY.get(prop[1].toLowerCase())!, prop[2].trim(), i + 1])
+      current.codeLine = i + 2
+      return
+    }
+    if (inProps && line.trim() === '' && current.props.length) {
+      current.codeLine = i + 2
+      return
+    }
+    inProps = false
+    code[code.length - 1].push(line)
+  })
+
+  sections.forEach((s, i) => (s.code = code[i].join('\n')))
+  return sections
+}
+
+let idCounter = 0
+const nextId = (prefix = 'b') => `${prefix}${++idCounter}`
+
+function menuValue(key: string, display: string): string {
+  const menu = MENUS[key]
+  if (!menu) return display
+  for (const lang of ['de', 'en'] as const) {
+    for (const [value, text] of Object.entries(menu[lang])) {
+      if (text.toLowerCase() === display.toLowerCase()) return value
+    }
+  }
+  return display
+}
+
+function parseValue(v: string): string | number {
+  const n = Number(v)
+  return v.trim() !== '' && Number.isFinite(n) && String(n) === v.trim() ? n : v
+}
+
+function splitList(v: string): string[] {
+  return v.trim() === '' ? [] : v.split(',').map((s) => s.trim())
+}
+
+class ProjectBuilder {
+  stage: any
+  lang: Lang
+  constructor(lang: Lang) {
+    this.lang = lang
+    this.stage = stageJSON()
+  }
+
+  /** looks up a variable (sprite first, then stage) or creates a global one */
+  variable(target: any, name: string, type: '' | 'list' | 'broadcast_msg'): string {
+    if (type === 'broadcast_msg') {
+      for (const [id, n] of Object.entries(this.stage.broadcasts)) if (n === name) return id
+      const id = nextId('msg')
+      this.stage.broadcasts[id] = name
+      return id
+    }
+    const key = type === 'list' ? 'lists' : 'variables'
+    for (const t of [target, this.stage]) {
+      for (const [id, v] of Object.entries<any>(t[key])) if (v[0] === name) return id
+    }
+    const id = nextId(type === 'list' ? 'list' : 'var')
+    this.stage[key][id] = [name, type === 'list' ? [] : 0]
+    return id
+  }
+
+  isList(target: any, name: string) {
+    return [target, this.stage].some((t) => Object.values<any>(t.lists).some((l) => l[0] === name))
+  }
+}
+
+interface ProcInfo {
+  proccode: string
+  argumentids: string[]
+  argumentnames: string[]
+}
+
+class ScriptConverter {
+  blocks: Record<string, any> = {}
+  procs = new Map<string, ProcInfo>()
+  params = new Set<string>()
+
+  constructor(
+    readonly target: any,
+    readonly builder: ProjectBuilder,
+    readonly firstLine: number
+  ) {}
+
+  /** the block that could not be converted, to find its line */
+  failed: any = null
+
+  fail(message: string, node: any): never {
+    this.failed = node
+    throw new TextError(message)
+  }
+
+  /** scratchblocks' spec with %n/%s/%b → Scratch proccode with %s/%b */
+  static proccode(call: string) {
+    return call.replace(/%[nsm](\.[\w]+)?/g, '%s').replace(/%b/g, '%b')
+  }
+
+  collectProcedures(scripts: any[]) {
+    for (const script of scripts) {
+      const hat = script.blocks[0]
+      if (hat?.info?.selector !== 'procDef') continue
+      const proccode = ScriptConverter.proccode(hat.info.call)
+      const names: string[] = hat.info.names || []
+      this.procs.set(proccode, {
+        proccode,
+        argumentnames: names,
+        argumentids: names.map(() => nextId('arg')),
+      })
+    }
+  }
+
+  script(script: any, y: number) {
+    let parent: string | null = null
+    let first: string | null = null
+    for (const block of script.blocks) {
+      if (block.isComment) continue
+      const id = this.block(block, parent)
+      if (parent) this.blocks[parent].next = id
+      else first = id
+      parent = id
+    }
+    if (first) {
+      this.blocks[first].topLevel = true
+      this.blocks[first].x = 0
+      this.blocks[first].y = y
+    }
+  }
+
+  private add(opcode: string, parent: string | null, extra: object = {}): string {
+    const id = nextId()
+    this.blocks[id] = {
+      opcode,
+      next: null,
+      parent,
+      inputs: {},
+      fields: {},
+      shadow: false,
+      topLevel: false,
+      ...extra,
+    }
+    return id
+  }
+
+  /**
+   * Children that are arguments (inputs or nested reporters) in message order.
+   * Translations may order them differently ("gehe %2 Ebenen %1").
+   */
+  private args(block: any) {
+    const args = block.children.filter((c: any) => c.isInput || c.isBlock)
+    const spec: string | undefined = block.info?.language?.commands?.[block.info.id]
+    if (!spec) return args
+    const order = [...spec.matchAll(/%(\d+)/g)].map((m) => Number(m[1]))
+    if (order.every((n, i) => n === i + 1)) return args
+    const sorted: any[] = []
+    order.forEach((n, i) => (sorted[n - 1] = args[i]))
+    return [...sorted, ...args.slice(order.length)]
+  }
+
+  private scripts(block: any) {
+    return block.children.filter((c: any) => c.isScript)
+  }
+
+  block(block: any, parent: string | null): string {
+    const info = block.info || {}
+
+    if (info.selector === 'procDef') return this.procDefinition(block, parent)
+    if (info.selector === 'call') return this.procCall(block, parent)
+    if (info.selector === 'readVariable' || info.selector === 'contentsOfList:' || (!info.id && block.isReporter)) {
+      return this.reporterByName(block, parent)
+    }
+    if (info.selector === 'getParam') return this.param(block, parent)
+
+    let opcode = OPCODE_BY_SB[info.id]
+    if (info.id === 'CONTROL_IF' && this.scripts(block).length > 1) opcode = 'control_if_else'
+    if (!opcode) this.fail(`unbekannter Block „${blockText(block)}“`, block)
+
+    const spec = BLOCKS[opcode]
+    const id = this.add(opcode, parent)
+    const node = this.blocks[id]
+    const args = this.args(block)
+
+    spec.args.forEach((arg, i) => {
+      const child = args[i]
+      if (arg.kind === 'field') {
+        node.fields[arg.name] = this.field(opcode, arg, child)
+      } else {
+        const input = this.input(opcode, arg, child, id)
+        if (input) node.inputs[arg.name] = input
+      }
+    })
+
+    this.scripts(block).forEach((script: any, i: number) => {
+      const name = spec.statements[i]
+      if (!name) return
+      let prev: string | null = null
+      let first: string | null = null
+      for (const b of script.blocks) {
+        const childId = this.block(b, prev ?? id)
+        if (prev) this.blocks[prev].next = childId
+        else first = childId
+        prev = childId
+      }
+      if (first) node.inputs[name] = [2, first]
+    })
+
+    return id
+  }
+
+  private text(child: any): string {
+    if (!child) return ''
+    if (child.isInput) return String(child.value ?? '')
+    if (child.isBlock) return blockText(child)
+    return ''
+  }
+
+  private field(opcode: string, arg: ArgSpec, child: any): [string, string | null] {
+    const raw = this.text(child)
+    if (arg.variable !== undefined) {
+      const type = arg.variable as '' | 'list' | 'broadcast_msg'
+      const name = raw || (type === 'list' ? 'list' : 'variable')
+      return [name, this.builder.variable(this.target, name, type)]
+    }
+    return [menuValue(`${opcode}.${arg.name}`, raw), null]
+  }
+
+  private input(opcode: string, arg: ArgSpec, child: any, parent: string): any[] | null {
+    const shadow = arg.shadow
+    const primitive = shadow ? PRIMITIVES[shadow] : undefined
+
+    const shadowValue = (value: string): any => {
+      if (primitive !== undefined) return [primitive, value]
+      if (shadow === 'event_broadcast_menu') {
+        const name = value || 'message1'
+        return [11, name, this.builder.variable(this.target, name, 'broadcast_msg')]
+      }
+      if (shadow) {
+        const sid = this.add(shadow, parent, { shadow: true })
+        if (arg.shadowField) {
+          this.blocks[sid].fields[arg.shadowField] = [menuValue(`${shadow}.${arg.shadowField}`, value), null]
+        }
+        return sid
+      }
+      return null
+    }
+
+    // nested reporter or boolean block
+    if (child?.isBlock) {
+      const info = child.info || {}
+      const isVar = info.selector === 'readVariable' || (!info.id && child.isReporter && !info.selector)
+      if (isVar && !this.params.has(blockText(child))) {
+        const name = blockText(child)
+        const isList = info.category === 'list' || this.builder.isList(this.target, name)
+        const ref = isList
+          ? [13, name, this.builder.variable(this.target, name, 'list')]
+          : [12, name, this.builder.variable(this.target, name, '')]
+        const obscured = shadow ? shadowValue(arg.default ?? '') : null
+        return obscured === null ? [3, ref] : [3, ref, obscured]
+      }
+      const obscured = shadow ? shadowValue(arg.default ?? '') : null
+      const cid = this.block(child, parent)
+      return obscured === null ? [2, cid] : [3, cid, obscured]
+    }
+
+    if (!shadow) return null // empty boolean or c-slot
+
+    const value = child?.isInput ? String(child.value ?? '') : arg.default ?? ''
+    return [1, shadowValue(value)]
+  }
+
+  private reporterByName(block: any, parent: string | null): string {
+    const name = blockText(block)
+    if (this.params.has(name)) return this.param(block, parent)
+    const isList = block.info?.category === 'list' || this.builder.isList(this.target, name)
+    const id = this.add(isList ? 'data_listcontents' : 'data_variable', parent)
+    this.blocks[id].fields[isList ? 'LIST' : 'VARIABLE'] = [
+      name,
+      this.builder.variable(this.target, name, isList ? 'list' : ''),
+    ]
+    return id
+  }
+
+  private param(block: any, parent: string | null): string {
+    const name = blockText(block)
+    const opcode = block.isBoolean ? 'argument_reporter_boolean' : 'argument_reporter_string_number'
+    const id = this.add(opcode, parent)
+    this.blocks[id].fields.VALUE = [name, null]
+    return id
+  }
+
+  private procDefinition(block: any, parent: string | null): string {
+    const proccode = ScriptConverter.proccode(block.info.call)
+    const proc = this.procs.get(proccode)!
+    const id = this.add('procedures_definition', parent)
+    const proto = this.add('procedures_prototype', id, { shadow: true })
+    const types = proccode.match(/%[sb]/g) || []
+
+    proc.argumentnames.forEach((name, i) => {
+      this.params.add(name)
+      const opcode = types[i] === '%b' ? 'argument_reporter_boolean' : 'argument_reporter_string_number'
+      const rid = this.add(opcode, proto, { shadow: true })
+      this.blocks[rid].fields.VALUE = [name, null]
+      this.blocks[proto].inputs[proc.argumentids[i]] = [1, rid]
+    })
+
+    this.blocks[proto].mutation = {
+      tagName: 'mutation',
+      children: [],
+      proccode,
+      argumentids: JSON.stringify(proc.argumentids),
+      argumentnames: JSON.stringify(proc.argumentnames),
+      argumentdefaults: JSON.stringify(types.map((t) => (t === '%b' ? 'false' : ''))),
+      warp: 'false',
+    }
+    this.blocks[id].inputs.custom_block = [1, proto]
+    return id
+  }
+
+  private procCall(block: any, parent: string | null): string {
+    const proccode = ScriptConverter.proccode(block.info.call)
+    const proc = this.procs.get(proccode)
+    if (!proc) this.fail(`unbekannter eigener Block „${blockText(block)}“`, block)
+    const id = this.add('procedures_call', parent)
+    const types = proccode.match(/%[sb]/g) || []
+    const args = this.args(block)
+
+    types.forEach((type, i) => {
+      const argId = proc.argumentids[i]
+      const child = args[i]
+      if (type === '%b') {
+        if (child?.isBlock) this.blocks[id].inputs[argId] = [2, this.block(child, id)]
+      } else {
+        const input = this.input('procedures_call', { name: argId, kind: 'input', shadow: 'text', default: '' }, child, id)
+        if (input) this.blocks[id].inputs[argId] = input
+      }
+    })
+
+    this.blocks[id].mutation = {
+      tagName: 'mutation',
+      children: [],
+      proccode,
+      argumentids: JSON.stringify(proc.argumentids),
+      warp: 'false',
+    }
+    return id
+  }
+}
+
+function blockText(block: any): string {
+  return block.children
+    .filter((c: any) => c.isLabel)
+    .map((c: any) => c.value)
+    .join(' ')
+}
+
+function applyProps(target: any, section: Section, builder: ProjectBuilder) {
+  for (const [prop, value, line] of section.props) {
+    const fail = (message: string): never => {
+      throw new TextError(message, line)
+    }
+    const number = (v: string) => {
+      const n = Number(v.trim())
+      if (!Number.isFinite(n)) fail(`„${v}“ ist keine Zahl`)
+      return n
+    }
+    const yes = (v: string) => /^(ja|yes|true|1)$/i.test(v.trim())
+
+    switch (prop) {
+      case 'costumes':
+      case 'backdrops': {
+        const keys = splitList(value)
+        target.costumes = keys.map((key) => ({ name: key, asset: key }))
+        break
+      }
+      case 'costume':
+      case 'backdrop': {
+        const index = target.costumes.findIndex((c: any) => c.name === value.trim())
+        if (index < 0) fail(`Kostüm „${value}“ gibt es nicht`)
+        target.currentCostume = index
+        break
+      }
+      case 'sounds':
+        target.sounds = splitList(value).map((key) => ({ name: key, asset: key }))
+        break
+      case 'position': {
+        const [x, y] = value.split(',').map(number)
+        target.x = x
+        target.y = y ?? 0
+        break
+      }
+      case 'direction':
+        target.direction = number(value)
+        break
+      case 'size':
+        target.size = number(value)
+        break
+      case 'visible':
+        target.visible = yes(value)
+        break
+      case 'draggable':
+        target.draggable = yes(value)
+        break
+      case 'rotation':
+        target.rotationStyle = value.trim()
+        break
+      case 'variables':
+        for (const entry of splitList(value)) {
+          const [name, v = '0'] = entry.split('=').map((s) => s.trim())
+          target.variables[nextId('var')] = [name, parseValue(v)]
+        }
+        break
+      case 'lists':
+        for (const entry of value.split(';')) {
+          if (!entry.trim()) continue
+          const eq = entry.indexOf('=')
+          const name = (eq < 0 ? entry : entry.slice(0, eq)).trim()
+          const items = eq < 0 ? [] : splitList(entry.slice(eq + 1)).map(parseValue)
+          target.lists[nextId('list')] = [name, items]
+        }
+        break
+      case 'show':
+        target.__show = splitList(value)
+        break
+    }
+  }
+  void builder
+}
+
+export function parseScratchText(text: string, options: TextOptions): ProjectJSON {
+  idCounter = 0
+  const builder = new ProjectBuilder(options.lang)
+  const sections = splitSections(text, options.lang)
+  const sprites: any[] = []
+
+  // sections first, so variables declared anywhere are known to all scripts
+  const targets = sections.map((section) => {
+    if (section.kind === 'stage') {
+      applyProps(builder.stage, section, builder)
+      return builder.stage
+    }
+    let sprite = sprites.find((s) => s.name === section.name)
+    if (!sprite) {
+      const lib = SPRITES[DEFAULT_SPRITE]
+      sprite = spriteJSON(section.name, lib.costumes, lib.sounds, sprites.length + 1)
+      sprites.push(sprite)
+    }
+    applyProps(sprite, section, builder)
+    return sprite
+  })
+
+  if (!sprites.length && !sections.some((s) => s.kind === 'stage')) {
+    sprites.push(defaultSpriteJSON(options.lang))
+  }
+
+  sections.forEach((section, i) => {
+    if (!section.code.trim()) return
+    const target = targets[i]
+    let doc: any
+    try {
+      doc = parse(section.code, { languages: ['en', 'de'] })
+    } catch (e: any) {
+      throw new TextError(e.message, section.codeLine)
+    }
+
+    const converter = new ScriptConverter(target, builder, section.codeLine)
+    converter.collectProcedures(doc.scripts)
+
+    // scratchblocks does not report lines; map scripts to their first line
+    const starts = scriptStartLines(section.code)
+    let y = 0
+    doc.scripts.forEach((script: any, si: number) => {
+      try {
+        converter.script(script, y)
+      } catch (e: any) {
+        const start = starts[si] ?? 0
+        const offset = converter.failed ? findLine(section.code, start, blockText(converter.failed)) : 0
+        throw new TextError(e.message, section.codeLine + start + offset)
+      }
+      y += 64 + 48 * countBlocks(script)
+    })
+    Object.assign(target.blocks, converter.blocks)
+  })
+
+  const project: ProjectJSON = { targets: [builder.stage, ...sprites], monitors: [], extensions: [] }
+
+  // monitors for "Anzeigen:" and the pen extension if used
+  let monitorY = 5
+  for (const target of project.targets) {
+    for (const name of target.__show || []) {
+      const scope = [target, builder.stage].find((t) =>
+        Object.values<any>(t.variables).some((v) => v[0] === name)
+      )
+      if (!scope) throw new TextError(`Variable „${name}“ gibt es nicht`)
+      const [id] = Object.entries<any>(scope.variables).find(([, v]) => v[0] === name)!
+      project.monitors!.push({
+        id,
+        mode: 'default',
+        opcode: 'data_variable',
+        params: { VARIABLE: name },
+        spriteName: scope.isStage ? null : scope.name,
+        value: 0,
+        width: 0,
+        height: 0,
+        x: 5,
+        y: monitorY,
+        visible: true,
+        sliderMin: 0,
+        sliderMax: 100,
+        isDiscrete: true,
+      })
+      monitorY += 27
+    }
+    delete target.__show
+    if (Object.values<any>(target.blocks).some((b) => b.opcode.startsWith('pen_'))) {
+      if (!project.extensions!.includes('pen')) project.extensions!.push('pen')
+    }
+  }
+
+  return expandProject(project)
+}
+
+function scriptStartLines(code: string): number[] {
+  const starts: number[] = []
+  let inScript = false
+  code.split('\n').forEach((line, i) => {
+    const blank = line.trim() === ''
+    if (!blank && !inScript) starts.push(i)
+    inScript = !blank
+  })
+  return starts
+}
+
+function countBlocks(script: any): number {
+  let n = 0
+  const walk = (b: any) => {
+    n++
+    b.children?.forEach((c: any) => c.isScript && c.blocks.forEach(walk))
+  }
+  script.blocks.forEach(walk)
+  return n
+}
+
+/** offset (from `start`) of the first line containing the words of `text` */
+function findLine(code: string, start: number, text: string): number {
+  const norm = (v: string) => v.replace(/[\[\]()<>]/g, ' ').replace(/\s+/g, ' ').trim().toLowerCase()
+  const needle = norm(text)
+  const lines = code.split('\n')
+  for (let i = start; i < lines.length; i++) {
+    if (needle && norm(lines[i]).includes(needle)) return i - start
+  }
+  return 0
+}
+
+// ---------------------------------------------------------------------------
+// writing
+// ---------------------------------------------------------------------------
+
+function specText(sbId: string, lang: Lang): string {
+  const override = SPEC_OVERRIDES[lang][sbId]
+  if (override) return override
+  const spec = lang === 'de' ? (deLocale as any).commands[sbId] ?? ENGLISH_SPECS[sbId] : ENGLISH_SPECS[sbId]
+  if (!spec) throw new Error(`no text for ${sbId}`)
+  return spec.replace(/\s*@\w+/g, '').trim()
+}
+
+function escape(value: string) {
+  return String(value).replace(/([\[\]()<>\\])/g, '\\$1')
+}
+
+class ScriptWriter {
+  constructor(
+    readonly target: any,
+    readonly lang: Lang
+  ) {}
+
+  get blocks() {
+    return this.target.blocks
+  }
+
+  unsupported(what: string): never {
+    throw new Error(`cannot be written as text: ${what}`)
+  }
+
+  stack(id: string | null, indent: string, out: string[]) {
+    while (id) {
+      const block = this.blocks[id]
+      this.statement(block, indent, out)
+      id = block.next
+    }
+  }
+
+  private statement(block: any, indent: string, out: string[]) {
+    if (block.opcode === 'procedures_definition') {
+      out.push(indent + this.definition(block))
+      return
+    }
+    out.push(indent + this.inline(block))
+    const spec = BLOCKS[block.opcode]
+    if (!spec?.statements.length) return
+    spec.statements.forEach((name, i) => {
+      if (i > 0) out.push(indent + WORDS[this.lang].else)
+      this.stack(this.blocks[block.inputs[name]?.[1]] ? block.inputs[name][1] : null, indent + '  ', out)
+    })
+    out.push(indent + WORDS[this.lang].end)
+  }
+
+  private definition(block: any): string {
+    const proto = this.blocks[block.inputs.custom_block[1]]
+    const m = proto.mutation
+    if (m.warp === 'true' || m.warp === true) this.unsupported('custom block without screen refresh')
+    const names: string[] = JSON.parse(m.argumentnames)
+    let i = 0
+    const text = m.proccode.replace(/%[sb]/g, (t: string) => {
+      const name = escape(names[i++])
+      return t === '%b' ? `<${name}>` : `(${name})`
+    })
+    return `${WORDS[this.lang].define} ${text}`
+  }
+
+  /** a block as text, without its substacks */
+  inline(block: any): string {
+    const op = block.opcode
+
+    if (op === 'data_variable') return escape(block.fields.VARIABLE[0])
+    if (op === 'data_listcontents') return `${escape(block.fields.LIST[0])} :: list`
+    if (op === 'argument_reporter_string_number' || op === 'argument_reporter_boolean') {
+      return escape(block.fields.VALUE[0])
+    }
+    if (op === 'procedures_call') return this.call(block)
+
+    const spec = BLOCKS[op]
+    if (!spec) this.unsupported(op)
+    const args = spec.args.map((arg) => this.arg(op, arg, block))
+    return specText(spec.sb, this.lang).replace(/%(\d+)/g, (_, n) => args[Number(n) - 1] ?? '')
+  }
+
+  private call(block: any): string {
+    const m = block.mutation
+    const ids: string[] = JSON.parse(m.argumentids)
+    let i = 0
+    return m.proccode.replace(/%[sb]/g, (t: string) => {
+      const input = block.inputs[ids[i++]]
+      if (t === '%b') return this.wrap(input ? this.blocks[input[1]] : null, 'boolean')
+      return this.inputText({ name: '', kind: 'input', shadow: 'text' }, input)
+    })
+  }
+
+  private wrap(block: any, shape: 'boolean' | 'reporter') {
+    if (!block) return shape === 'boolean' ? '<>' : '()'
+    const text = this.inline(block)
+    const boolean =
+      block.opcode === 'argument_reporter_boolean' || BLOCKS[block.opcode]?.shape === 'boolean'
+    return boolean ? `<${text}>` : `(${text})`
+  }
+
+  private arg(opcode: string, arg: ArgSpec, block: any): string {
+    if (arg.kind === 'field') {
+      const [value] = block.fields[arg.name] ?? ['']
+      const menu = MENUS[`${opcode}.${arg.name}`]
+      const text = menu?.[this.lang][value] ?? value
+      return `[${escape(text)} v]`
+    }
+    return this.inputText(arg, block.inputs[arg.name])
+  }
+
+  private inputText(arg: ArgSpec, input: any[] | undefined): string {
+    if (!input) return arg.shadow ? this.primitiveText(arg, '') : '<>'
+    const [, value] = input
+
+    // [1, primitive] / [1, shadowId] / [2|3, blockId|variable, shadow]
+    if (input[0] === 1) {
+      if (Array.isArray(value)) return this.compact(arg, value)
+      return this.menuText(this.blocks[value])
+    }
+    if (Array.isArray(value)) return this.compact(arg, value)
+    return this.wrap(this.blocks[value], 'reporter')
+  }
+
+  private compact(arg: ArgSpec, value: any[]): string {
+    const [type, v] = value
+    if (type === 12) return `(${escape(v)})`
+    if (type === 13) return `(${escape(v)} :: list)`
+    if (type === 11) return `[${escape(v)} v]`
+    const shadow = PRIMITIVE_TYPES[type] ?? arg.shadow
+    return this.primitiveText({ ...arg, shadow }, String(v))
+  }
+
+  private primitiveText(arg: ArgSpec, value: string): string {
+    // like scratchblocks: numbers are round, even in text inputs ("set [x v] to (0)")
+    if (arg.shadow === 'text' && !isNumeric(value)) return `[${escape(value)}]`
+    if (arg.shadow === 'colour_picker') return `[${value}]`
+    return `(${escape(value)})`
+  }
+
+  private menuText(shadow: any): string {
+    if (!shadow) return '()'
+    const [fieldName] = Object.keys(shadow.fields)
+    const [value] = shadow.fields[fieldName] ?? ['']
+    const menu = MENUS[`${shadow.opcode}.${fieldName}`]
+    const text = menu?.[this.lang][value] ?? value
+    return `(${escape(text)} v)`
+  }
+}
+
+function isNumeric(v: string) {
+  return v.trim() !== '' && Number.isFinite(Number(v))
+}
+
+function sameList(a: string[], b: string[]) {
+  return a.length === b.length && a.every((v, i) => v === b[i])
+}
+
+function assetKeys(assets: any[], what: string): string[] {
+  return assets.map((a) => {
+    const key = a.asset ?? libraryIds.byMd5.get(a.assetId)
+    if (!key || a.name !== key) throw new Error(`cannot be written as text: ${what} ${a.name}`)
+    return key
+  })
+}
+
+function formatValue(v: any): string {
+  const s = String(v)
+  if (/[,;=]/.test(s)) throw new Error(`cannot be written as text: value ${s}`)
+  return s
+}
+
+function propertyLines(target: any, lang: Lang, monitors: string[]): string[] {
+  const key = (id: string) => PROPERTIES[id][lang]
+  const lines: string[] = []
+  const lib = SPRITES[DEFAULT_SPRITE]
+  const words = WORDS[lang]
+
+  if (target.isStage) {
+    const backdrops = assetKeys(target.costumes, 'backdrop')
+    if (!sameList(backdrops, [DEFAULT_BACKDROP])) lines.push(`${key('backdrops')}: ${backdrops.join(', ')}`)
+    if (target.currentCostume) lines.push(`${key('backdrop')}: ${backdrops[target.currentCostume]}`)
+    if (target.sounds.length) lines.push(`${key('sounds')}: ${assetKeys(target.sounds, 'sound').join(', ')}`)
+  } else {
+    const costumes = assetKeys(target.costumes, 'costume')
+    if (!sameList(costumes, lib.costumes)) lines.push(`${key('costumes')}: ${costumes.join(', ')}`)
+    if (target.currentCostume) lines.push(`${key('costume')}: ${costumes[target.currentCostume]}`)
+    const sounds = assetKeys(target.sounds, 'sound')
+    if (!sameList(sounds, lib.sounds)) lines.push(`${key('sounds')}: ${sounds.join(', ')}`)
+    if (target.x || target.y) lines.push(`${key('position')}: ${round(target.x)}, ${round(target.y)}`)
+    if (target.direction !== 90) lines.push(`${key('direction')}: ${round(target.direction)}`)
+    if (target.size !== 100) lines.push(`${key('size')}: ${round(target.size)}`)
+    if (target.visible === false) lines.push(`${key('visible')}: ${words.no}`)
+    if (target.draggable) lines.push(`${key('draggable')}: ${words.yes}`)
+    if (target.rotationStyle && target.rotationStyle !== 'all around') {
+      lines.push(`${key('rotation')}: ${target.rotationStyle}`)
+    }
+  }
+
+  const vars = Object.values<any>(target.variables || {})
+  if (vars.some((v) => v[2])) throw new Error('cannot be written as text: cloud variable')
+  if (vars.length) {
+    lines.push(`${key('variables')}: ${vars.map((v) => `${formatValue(v[0])} = ${formatValue(v[1])}`).join(', ')}`)
+  }
+  const lists = Object.values<any>(target.lists || {})
+  if (lists.length) {
+    lines.push(
+      `${key('lists')}: ${lists
+        .map((l) => `${formatValue(l[0])} = ${(l[1] as any[]).map(formatValue).join(', ')}`.trimEnd())
+        .join('; ')}`
+    )
+  }
+  if (monitors.length) lines.push(`${key('show')}: ${monitors.join(', ')}`)
+  return lines
+}
+
+function round(n: number) {
+  return Math.round(n * 100) / 100
+}
+
+export function stringifyScratchText(project: ProjectJSON, options: TextOptions): string {
+  const lang = options.lang
+  const stage = project.targets.find((t) => t.isStage)
+  const sprites = project.targets.filter((t) => !t.isStage).sort((a, b) => (a.layerOrder ?? 0) - (b.layerOrder ?? 0))
+
+  const unsupportedExt = (project.extensions || []).filter((e) => e !== 'pen')
+  if (unsupportedExt.length) throw new Error(`cannot be written as text: extension ${unsupportedExt.join(', ')}`)
+
+  const visibleMonitors = (project.monitors || []).filter((m: any) => m.visible)
+  const monitorsOf = (target: any) =>
+    visibleMonitors
+      .filter((m: any) => m.opcode === 'data_variable' && (target.isStage ? !m.spriteName : m.spriteName === target.name))
+      .map((m: any) => m.params.VARIABLE)
+  if (visibleMonitors.some((m: any) => m.opcode !== 'data_variable')) {
+    throw new Error('cannot be written as text: list or sensing monitor')
+  }
+
+  const sections = [stage, ...sprites].map((target) => {
+    const writer = new ScriptWriter(target, lang)
+    const tops = Object.entries<any>(target.blocks)
+      .filter(([, b]) => b.topLevel && !b.shadow)
+      .sort(([, a], [, b]) => (a.y ?? 0) - (b.y ?? 0) || (a.x ?? 0) - (b.x ?? 0))
+    const scripts = tops.map(([id]) => {
+      const out: string[] = []
+      writer.stack(id, '', out)
+      return out.join('\n')
+    })
+    if (Object.values<any>(target.comments || {}).length) throw new Error('cannot be written as text: comments')
+    return { target, props: propertyLines(target, lang, monitorsOf(target)), scripts }
+  })
+
+  const [stageSection, ...spriteSections] = sections
+  const lib = SPRITES[DEFAULT_SPRITE]
+  const headless =
+    spriteSections.length === 1 &&
+    spriteSections[0].target.name === lib.name[lang] &&
+    spriteSections[0].props.length === 0 &&
+    stageSection.props.length === 0 &&
+    stageSection.scripts.length === 0
+
+  if (headless) return spriteSections[0].scripts.join('\n\n')
+
+  const words = WORDS[lang]
+  const parts: string[] = []
+  const emit = (header: string, section: (typeof sections)[number]) => {
+    const block = [header, ...section.props]
+    parts.push([block.join('\n'), ...section.scripts].join('\n\n'))
+  }
+  if (stageSection.props.length || stageSection.scripts.length || !spriteSections.length) {
+    emit(`[${words.stage}]`, stageSection)
+  }
+  for (const section of spriteSections) emit(`[${words.sprite} ${section.target.name}]`, section)
+  return parts.join('\n\n')
+}

@@ -1,0 +1,59 @@
+# Full-featured OERSI metadata example (all recommended fields, multilingual)
+'@context': https://schema.org/
+creativeWorkStatus: Published
+type: LearningResource
+
+name: "Einführung in Datenbanksysteme / Introduction to Database Systems"
+description: >-
+  DE: Eine umfassende Einführung in relationale Datenbanksysteme, SQL und Datenmodellierung für Studierende der Informatik und Wirtschaftswissenschaften.
+  EN: A comprehensive introduction to relational database systems, SQL, and data modeling for students of computer science and business.
+license: "https://creativecommons.org/licenses/by-sa/4.0/deed.de"
+inLanguage:
+  - de
+  - en
+learningResourceType:
+  - "https://w3id.org/kim/hcrt/course"
+  - "https://w3id.org/kim/hcrt/slide"
+educationalLevel:
+  - "https://w3id.org/kim/educationalLevel/level_A"
+about:
+  - "https://w3id.org/kim/hochschulfaechersystematik/n079"
+  - "https://w3id.org/kim/hochschulfaechersystematik/n33"
+creator:
+  - givenName: "André"
+    familyName: "Dietrich"
+    id: "https://orcid.org/0009-0009-9272-7154"
+    type: Person
+    affiliation:
+      name: "Technische Universität Bergakademie Freiberg"
+      id: "https://ror.org/031vc2293"
+      type: Organization
+publisher:
+  - name: "Technische Universität Bergakademie Freiberg"
+    id: "https://ror.org/031vc2293"
+    type: Organization
+url: "https://liascript.github.io/course/?https://raw.githubusercontent.com/andre-dietrich/Datenbankensysteme-Vorlesung/refs/heads/main/README.md"
+id: "https://liascript.github.io/course/?https://raw.githubusercontent.com/andre-dietrich/Datenbankensysteme-Vorlesung/refs/heads/main/README.md"
+image: "https://img.youtube.com/vi/ZMkk2wDlpO8/maxresdefault.jpg"
+video: "https://www.youtube.com/watch?v=ZMkk2wDlpO8"
+keywords:
+  - Datenbanksysteme
+  - Database Systems
+  - SQL
+  - Relationale Datenbanken
+  - OER
+  - LiaScript
+interactivityType: active
+isAccessibleForFree: true
+datePublished: "2026-05-21"
+hasPart:
+  - name: "Kapitel 1: Einführung / Chapter 1: Introduction"
+    description: "Überblick über Datenbanksysteme / Overview of database systems."
+    url: "https://example.org/materials/dbs-ch1"
+    learningResourceType: "https://w3id.org/kim/hcrt/slide"
+    image: "https://example.org/images/dbs-ch1.jpg"
+  - name: "Kapitel 2: SQL-Grundlagen / Chapter 2: SQL Basics"
+    description: "Grundlagen von SQL / Basics of SQL."
+    url: "https://example.org/materials/dbs-ch2"
+    learningResourceType: "https://w3id.org/kim/hcrt/slide"
+    image: "https://example.org/images/dbs-ch2.jpg"

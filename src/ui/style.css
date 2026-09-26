@@ -1,0 +1,242 @@
+lia-scratch {
+  display: block;
+  margin: 0.5rem 0 1rem;
+}
+
+.ls-root {
+  position: relative;
+  border: 1px solid #d9e3f2;
+  border-radius: 8px;
+  background: #e9f1fc;
+  overflow: hidden;
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  color: #575e75;
+}
+
+.ls-main {
+  display: flex;
+  height: 480px;
+}
+
+.ls-blocks {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 100%;
+}
+
+.ls-side {
+  flex: 0 0 38%;
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 6px;
+  box-sizing: border-box;
+  overflow: auto;
+}
+
+.ls-stage {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  background: #fff;
+  border: 1px solid #d9e3f2;
+  border-radius: 6px;
+  overflow: hidden;
+  outline: none;
+  flex: 0 0 auto;
+}
+
+.ls-stage:focus-visible {
+  box-shadow: 0 0 0 3px #4c97ff80;
+}
+
+.ls-stage canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.ls-question {
+  position: absolute;
+  left: 6px;
+  right: 6px;
+  bottom: 6px;
+  padding: 6px;
+  background: #fff;
+  border: 2px solid #d9e3f2;
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+
+.ls-question input {
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 4px;
+  padding: 4px 8px;
+  border: 1px solid #d9e3f2;
+  border-radius: 12px;
+}
+
+.ls-sprites {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.ls-sprite {
+  width: 64px;
+  height: 64px;
+  padding: 2px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  border: 2px solid #d9e3f2;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.65rem;
+  color: #575e75;
+  overflow: hidden;
+}
+
+.ls-sprite img {
+  max-width: 44px;
+  max-height: 40px;
+}
+
+.ls-sprite span {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ls-sprite.ls-selected {
+  border-color: #4c97ff;
+  background: #e9f1fc;
+}
+
+.ls-sprite.ls-add {
+  font-size: 1.8rem;
+  color: #4c97ff;
+}
+
+.ls-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: auto;
+}
+
+.ls-bar button,
+.ls-dialog button {
+  padding: 4px 10px;
+  border: 1px solid #d9e3f2;
+  border-radius: 6px;
+  background: #fff;
+  color: #575e75;
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+
+.ls-bar button.ls-active,
+.ls-dialog button.ls-primary {
+  background: #4c97ff;
+  border-color: #4c97ff;
+  color: #fff;
+}
+
+.ls-error {
+  padding: 6px 10px;
+  background: #fff0f0;
+  border-top: 1px solid #ffb3b3;
+  color: #c0392b;
+  font-size: 0.85rem;
+  white-space: pre-wrap;
+}
+
+.ls-dialog-back {
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(76, 151, 255, 0.35);
+}
+
+.ls-dialog {
+  min-width: 260px;
+  max-width: 90%;
+  padding: 12px;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ls-dialog-title {
+  font-weight: bold;
+}
+
+.ls-dialog input[type='text'] {
+  padding: 6px 8px;
+  border: 1px solid #d9e3f2;
+  border-radius: 6px;
+}
+
+.ls-dialog-buttons,
+.ls-dialog-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.ls-dialog-tools {
+  justify-content: flex-start;
+  font-size: 0.8rem;
+}
+
+.ls-procedure-area {
+  width: min(560px, 80vw);
+  height: 200px;
+}
+
+.ls-root:fullscreen {
+  display: flex;
+  flex-direction: column;
+  border-radius: 0;
+}
+
+.ls-root:fullscreen .ls-main {
+  flex: 1;
+  height: auto;
+}
+
+.ls-root:fullscreen .ls-side {
+  flex-basis: 45%;
+  max-width: none;
+}
+
+@media (max-width: 700px) {
+  .ls-main {
+    flex-direction: column-reverse;
+    height: auto;
+  }
+
+  .ls-blocks {
+    height: 420px;
+  }
+
+  .ls-side {
+    flex-basis: auto;
+    max-width: none;
+  }
+}

@@ -1,0 +1,60 @@
+# Build a project website from a single project.yaml and deploy to GitHub Pages.
+# No PDF/SCORM generation — fast, lightweight, ideal for a simple course catalog.
+#
+# Prerequisites:
+#   - project.yaml exists in the repo root
+#   - logo.jpg (or other assets) referenced in project.yaml exist
+#   - GitHub Pages is enabled on the gh-pages branch (Settings → Pages)
+#
+# Place this file at: .github/workflows/deploy-project.yml
+
+name: Deploy Project Website
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install LiaScript Exporter
+        run: npm install -g @liascript/exporter
+
+      - name: Generate project website
+        run: liaex -i project.yaml --format project --output index
+
+      - name: Prepare deployment directory
+        run: |
+          mkdir -p gh-pages-deploy
+          cp index.html gh-pages-deploy/
+          [ -f logo.jpg ] && cp logo.jpg gh-pages-deploy/
+          [ -f logo.png ] && cp logo.png gh-pages-deploy/
+          # Copy any assets/ directory if it exists
+          [ -d assets ] && cp -r assets gh-pages-deploy/
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages
+          publish_dir: gh-pages-deploy
+          force_orphan: true   # always replace gh-pages history completely
+          commit_message: "Deploy: ${{ github.event.head_commit.message }}"
+
+      - name: Output website URL
+        run: |
+          echo "Deployed to: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/"

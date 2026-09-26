@@ -1,0 +1,109 @@
+# Export a single LiaScript course to PDF, SCORM 2004 and IMS on every push,
+# then attach all generated files as assets to a GitHub Release tagged "latest".
+#
+# Place this file at: .github/workflows/export-course.yml
+
+name: Export LiaScript Course
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    env:
+      EXPORT_DIR: /tmp/lia-exports-${{ github.run_id }}-${{ github.run_attempt }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          path: project
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install LiaScript Exporter
+        run: npm install -g @liascript/exporter
+
+      - name: Prepare isolated output directory
+        run: |
+          rm -rf "$EXPORT_DIR"
+          mkdir -p "$EXPORT_DIR"
+
+      - name: Install Chromium system dependencies (required for PDF)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libgbm-dev libatk1.0-0 libatk-bridge2.0-0 libcups2 libdrm2 \
+            libxkbcommon0 libxcomposite1 libxdamage1 libxfixes3 libxrandr2 \
+            libpango-1.0-0 libcairo2 libasound2t64 libnss3 libnspr4 \
+            fonts-liberation ca-certificates wget
+
+      - name: Generate PDF
+        env:
+          PUPPETEER_ARGS: "--no-sandbox --disable-setuid-sandbox"
+        run: liaex -i project/README.md --format pdf --output "$EXPORT_DIR/Documentation" --pdf-timeout 60000
+
+      - name: Generate SCORM 2004
+        # Use scorm1.2 + --scorm-embed for Moodle 4 / OPAL / Open edX
+        # Use scorm2004 + --scorm-iframe for ILIAS / OpenOLAT / scorm.cloud
+        run: liaex -i project/README.md --format scorm2004 --output "$EXPORT_DIR/SCORM" --scorm-masteryScore 80
+
+      - name: Generate IMS package
+        run: liaex -i project/README.md --format ims --output "$EXPORT_DIR/IMS"
+
+      - name: Stage release assets
+        run: |
+          mkdir -p outputs
+          cp "$EXPORT_DIR/Documentation.pdf" outputs/Documentation.pdf
+          cp "$EXPORT_DIR/SCORM.zip" outputs/SCORM.zip
+          cp "$EXPORT_DIR/IMS.zip" outputs/IMS.zip
+
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: "latest"
+          release_name: "Latest Course Export"
+          draft: false
+          prerelease: false
+
+      - name: Upload PDF
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: outputs/Documentation.pdf
+          asset_name: Documentation.pdf
+          asset_content_type: application/pdf
+
+      - name: Upload SCORM
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: outputs/SCORM.zip
+          asset_name: SCORM.zip
+          asset_content_type: application/zip
+
+      - name: Upload IMS
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: outputs/IMS.zip
+          asset_name: IMS.zip
+          asset_content_type: application/zip

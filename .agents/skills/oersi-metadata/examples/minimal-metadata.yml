@@ -1,0 +1,22 @@
+# Minimal OERSI metadata example (required fields only)
+'@context': https://schema.org/
+creativeWorkStatus: Published
+type: LearningResource
+
+name: "Introduction to Databases"
+description: >-
+  A concise introduction to relational databases and SQL for beginners.
+license: "https://creativecommons.org/licenses/by/4.0/deed.en"
+inLanguage:
+  - en
+learningResourceType:
+  - "https://w3id.org/kim/hcrt/course"
+educationalLevel:
+  - "https://w3id.org/kim/educationalLevel/level_A"
+about:
+  - "https://w3id.org/kim/hochschulfaechersystematik/n079"
+creator:
+  - givenName: "Jane"
+    familyName: "Doe"
+    type: Person
+url: "https://example.org/materials/databases-intro"

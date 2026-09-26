@@ -1,0 +1,5 @@
+# Example: Multiple OER resources in one repository using !include
+- !include resource1.yml
+- !include resource2.yml
+
+# Each referenced file (resource1.yml, resource2.yml) should contain a valid OERSI metadata record as shown in the other examples.

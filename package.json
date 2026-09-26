@@ -1,0 +1,55 @@
+{
+  "name": "lia-scratch",
+  "version": "0.1.0",
+  "description": "LiaScript template: real Scratch 3 blocks and stage inside LiaScript code blocks, versioned via LiaScript's code history",
+  "app": "dist/index.js",
+  "targets": {
+    "app": {
+      "source": "src/index.ts",
+      "context": "browser",
+      "outputFormat": "global",
+      "includeNodeModules": true,
+      "sourceMap": false
+    }
+  },
+  "@parcel/resolver-default": {
+    "packageExports": true
+  },
+  "browserslist": [
+    "last 2 years",
+    "not dead"
+  ],
+  "scripts": {
+    "build": "parcel build --target app --no-cache",
+    "watch": "parcel watch --target app",
+    "test": "vitest run",
+    "serve": "npx @liascript/devserver --input README.md --port 3000 --live",
+    "postinstall": "node scripts/patch-vm.mjs",
+    "prebuild": "node scripts/patch-vm.mjs",
+    "gen:specs": "vite-node scripts/gen-specs.ts",
+    "typecheck": "tsc -p ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/LiaTemplates/Scratch.git"
+  },
+  "author": "André Dietrich <LiaScript@web.de>",
+  "license": "AGPL-3.0-only",
+  "devDependencies": {
+    "@parcel/transformer-inline-string": "^2.16.4",
+    "@scratch/scratch-render": "15.1.1",
+    "@scratch/scratch-storage": "15.1.1",
+    "@scratch/scratch-vm": "15.1.1",
+    "@types/node": "^24.19.0",
+    "events": "^3.3.0",
+    "jsdom": "^28.1.0",
+    "parcel": "^2.16.4",
+    "process": "^0.11.10",
+    "scratch-audio": "2.0.268",
+    "scratch-blocks": "2.1.19",
+    "scratch-render-fonts": "1.0.252",
+    "scratchblocks": "3.7.1",
+    "typescript": "^5.9.0",
+    "vitest": "^3.2.0"
+  }
+}

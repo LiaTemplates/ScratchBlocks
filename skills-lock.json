@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "skills": {
+    "creativity": {
+      "source": "LiaScript/skills",
+      "sourceType": "github",
+      "skillPath": "skills/creativity/SKILL.md",
+      "computedHash": "438475cab2ded0e13817901630daa551e9749ae448a41510c136a01925842150"
+    },
+    "exporter-workflow": {
+      "source": "LiaScript/skills",
+      "sourceType": "github",
+      "skillPath": "skills/exporter-workflow/SKILL.md",
+      "computedHash": "0763eac6a954e62acf45de9d7a6403e9c663f78864309843ea2ca8bdfb067b24"
+    },
+    "liascript-syntax": {
+      "source": "LiaScript/skills",
+      "sourceType": "github",
+      "skillPath": "skills/liascript-syntax/SKILL.md",
+      "computedHash": "ac4e27457cb06cb37b529dc8539c95b8094affb0204c1d7711e7779cb9032cfd"
+    },
+    "oersi-metadata": {
+      "source": "LiaScript/skills",
+      "sourceType": "github",
+      "skillPath": "skills/oersi-metadata/SKILL.md",
+      "computedHash": "b91ffe81a6adb091417e44734ee043d4c0af6e67ec1ed82172b18ce85dae65e9"
+    },
+    "reference-checker": {
+      "source": "LiaScript/skills",
+      "sourceType": "github",
+      "skillPath": "skills/reference-checker/SKILL.md",
+      "computedHash": "3320fb88a9f47d3173c75e3e4e1206ff94885fcd975446a59eccec1c8c6399f9"
+    },
+    "template-development": {
+      "source": "LiaScript/skills",
+      "sourceType": "github",
+      "skillPath": "skills/template-development/SKILL.md",
+      "computedHash": "421a8837e59c80a308105979c39e63612c44581eef9ba48d23e7f8cf6ff791ee"
+    }
+  }
+}

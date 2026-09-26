@@ -1,0 +1,124 @@
+# Build multiple project pages from separate YAML files in a project/ subdirectory,
+# generate PDFs and SCORM packages for each, then deploy everything to GitHub Pages.
+#
+# Repository layout expected:
+#   project/
+#     index.yaml              ← top-level navigation page (links to sub-sites)
+#     topic-a.yaml            ← one topic/audience/subject area
+#     topic-b.yaml
+#     topic-c.yaml
+#   assets/                   ← shared images/CSS referenced by project pages
+#
+# Real-world reference: https://github.com/Ifi-DiAgnostiK-Project/demo
+#
+# Place this file at: .github/workflows/deploy.yml
+
+name: Deploy Multi-Project Website
+
+on:
+  push:
+    branches:
+      - main
+  schedule:
+    - cron: "0 3 * * 0"   # also rebuild every Sunday at 03:00 UTC
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    env:
+      EXPORT_DIR: /tmp/lia-exports-${{ github.run_id }}-${{ github.run_attempt }}
+      CACHE_DIR: /tmp/lia-cache-${{ github.run_id }}-${{ github.run_attempt }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install LiaScript Exporter
+        run: npm install -g @liascript/exporter
+
+      - name: Prepare isolated output directories
+        run: |
+          rm -rf "$EXPORT_DIR" "$CACHE_DIR"
+          mkdir -p "$EXPORT_DIR" "$CACHE_DIR"
+
+      - name: Install Chromium system dependencies (required for PDF)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libgbm-dev libatk1.0-0 libatk-bridge2.0-0 libcups2 libdrm2 \
+            libxkbcommon0 libxcomposite1 libxdamage1 libxfixes3 libxrandr2 \
+            libpango-1.0-0 libcairo2 libasound2t64 libnss3 libnspr4 \
+            fonts-liberation ca-certificates wget
+
+      - name: Generate all project pages
+        working-directory: project
+        env:
+          # Required for Puppeteer inside GitHub Actions (no sandbox needed in CI)
+          PUPPETEER_ARGS: "--no-sandbox --disable-setuid-sandbox"
+        run: |
+          # Top-level index page — no PDF/SCORM needed here
+          liaex -f project -i index.yaml -o "$EXPORT_DIR/index"
+
+          # Per-topic pages with PDF and SCORM generation + full-text search.
+          # Use an isolated cache path so generated ZIP/PDF files are never inside project/.
+          liaex -f project -i topic-a.yaml -o "$EXPORT_DIR/topic-a" \
+            --project-search --project-generate-pdf --project-generate-scorm12 \
+            --project-generate-cache -p "$CACHE_DIR"
+
+          liaex -f project -i topic-b.yaml -o "$EXPORT_DIR/topic-b" \
+            --project-search --project-generate-pdf --project-generate-scorm12 \
+            --project-generate-cache -p "$CACHE_DIR"
+
+          liaex -f project -i topic-c.yaml -o "$EXPORT_DIR/topic-c" \
+            --project-search --project-generate-pdf --project-generate-scorm12 \
+            --project-generate-cache -p "$CACHE_DIR"
+
+          # Add further topic YAML files by duplicating the block above.
+          # Use --project-generate-scorm2004 instead of --project-generate-scorm12
+          # when targeting ILIAS, OpenOLAT, or scorm.cloud.
+
+      - name: Prepare deployment directory
+        run: |
+          mkdir -p gh-pages-deploy
+
+          # All generated HTML files from isolated export output
+          cp "$EXPORT_DIR"/*.html gh-pages-deploy/
+
+          # Generated PDFs — preserve subdirectory structure from cache
+          find "$CACHE_DIR" -name "*.pdf" | while read f; do
+            rel="${f#$CACHE_DIR/}"
+            mkdir -p "gh-pages-deploy/$(dirname "$rel")"
+            cp "$f" "gh-pages-deploy/$rel"
+          done
+
+          # Generated SCORM packages (ZIP) — preserve subdirectory structure
+          find "$CACHE_DIR" -name "*.zip" | while read f; do
+            rel="${f#$CACHE_DIR/}"
+            mkdir -p "gh-pages-deploy/$(dirname "$rel")"
+            cp "$f" "gh-pages-deploy/$rel"
+          done
+
+          # Shared assets (images, CSS) referenced by the project pages
+          [ -d assets ] && cp -r assets gh-pages-deploy/
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages
+          publish_dir: gh-pages-deploy
+          force_orphan: true   # always replace gh-pages history completely
+          commit_message: "Deploy: ${{ github.event.head_commit.message }}"
+
+      - name: Output deployed URL
+        run: |
+          echo "✅ Deployed successfully!"
+          echo "URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/"

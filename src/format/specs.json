@@ -1,0 +1,2559 @@
+{
+ "blocks": {
+  "motion_movesteps": {
+   "sb": "MOTION_MOVESTEPS",
+   "shape": "stack",
+   "args": [
+    {
+     "name": "STEPS",
+     "kind": "input",
+     "shadow": "math_number",
+     "shadowField": "NUM",
+     "default": "10"
+    }
+   ],
+   "statements": []
+  },
+  "motion_turnright": {
+   "sb": "MOTION_TURNRIGHT",
+   "shape": "stack",
+   "args": [
+    {
+     "name": "DEGREES",
+     "kind": "input",
+     "shadow": "math_number",
+     "shadowField": "NUM",
+     "default": "15"
+    }
+   ],
+   "statements": []
+  },
+  "motion_turnleft": {
+   "sb": "MOTION_TURNLEFT",
+   "shape": "stack",
+   "args": [
+    {
+     "name": "DEGREES",
+     "kind": "input",
+     "shadow": "math_number",
+     "shadowField": "NUM",
+     "default": "15"
+    }
+   ],
+   "statements": []
+  },
+  "motion_pointindirection": {
+   "sb": "MOTION_POINTINDIRECTION",
+   "shape": "stack",
+   "args": [
+    {
+     "name": "DIRECTION",
+     "kind": "input",
+     "shadow": "math_angle",
+     "shadowField": "NUM",
+     "default": "90"
+    }
+   ],
+   "statements": []
+  },
+  "motion_pointtowards": {
+   "sb": "MOTION_POINTTOWARDS",
+   "shape": "stack",
+   "args": [
+    {
+     "name": "TOWARDS",
+     "kind": "input",
+     "shadow": "motion_pointtowards_menu",
+     "shadowField": "TOWARDS",
+     "default": ""
+    }
+   ],
+   "statements": []
+  },
+  "motion_gotoxy": {
+   "sb": "MOTION_GOTOXY",
+   "shape": "stack",
+   "args": [
+    {
+     "name": "X",
+     "kind": "input",
+     "shadow": "math_number",
+     "shadowField": "NUM",
+     "default": "0"
+    },
+    {
+     "name": "Y",
+     "kind": "input",
+     "shadow": "math_number",
+     "shadowField": "NUM",
+     "default": "0"
+    }
+   ],
+   "statements": []
+  },
+  "motion_goto": {
+   "sb": "MOTION_GOTO",
+   "shape": "stack",
+   "args": [
+    {
+     "name": "TO",
+     "kind": "input",
+     "shadow": "motion_goto_menu",
+     "shadowField": "TO",
+     "default": ""
+    }
+   ],
+   "statements": []
+  },
+  "motion_glidesecstoxy": {
+   "sb": "MOTION_GLIDESECSTOXY",
+   "shape": "stack",
+   "args": [
+    {
+     "name": "SECS",
+     "kind": "input",
+     "shadow": "math_number",
+     "shadowField": "NUM",
+     "default": "1"
+    },
+    {
+     "name": "X",
+     "kind": "input",
+     "shadow": "math_number",
+     "shadowField": "NUM",
+     "default": "0"
+    },
+    {
+     "name": "Y",
+     "kind": "input",
+     "shadow": "math_number",
+     "shadowField": "NUM",
+     "default": "0"
+    }
+   ],
+   "statements": []
+  },
+  "motion_glideto": {
+   "sb": "MOTION_GLIDETO",
+   "shape": "stack",
+   "args": [
+    {
+     "name": "SECS",
+     "kind": "input",
+     "shadow": "math_number",
+     "shadowField": "NUM",
+     "default": "1"
+    },
+    {
+     "name": "TO",
+     "kind": "input",
+     "shadow": "motion_glideto_menu",
+     "shadowField": "TO",
+     "default": ""
+    }
+   ],
+   "statements": []
+  },
+  "motion_changexby": {
+   "sb": "MOTION_CHANGEXBY",
+   "shape": "stack",
+   "args": [
+    {
+     "name": "DX",
+     "kind": "input",
+     "shadow": "math_number",
+     "shadowField": "NUM",
+     "default": "10"
+    }
+   ],
+   "statements": []
+  },
+  "motion_setx": {
+   "sb": "MOTION_SETX",
+   "shape": "stack",
+   "args": [
+    {
+     "name": "X",
+     "kind": "input",
+     "shadow": "math_number",
+     "shadowField": "NUM",
+     "default": "0"
+    }
+   ],
+   "statements": []
+  },
+  "motion_changeyby": {
+   "sb": "MOTION_CHANGEYBY",
+   "shape": "stack",
+   "args": [
+    {
+     "name": "DY",
+     "kind": "input",
+     "shadow": "math_number",
+     "shadowField": "NUM",
+     "default": "10"
+    }
+   ],
+   "statements": []
+  },
+  "motion_sety": {
+   "sb": "MOTION_SETY",
+   "shape": "stack",
+   "args": [
+    {
+     "name": "Y",
+     "kind": "input",
+     "shadow": "math_number",
+     "shadowField": "NUM",
+     "default": "0"
+    }
+   ],
+   "statements": []
+  },
+  "motion_setrotationstyle": {
+   "sb": "MOTION_SETROTATIONSTYLE",
+   "shape": "stack",
+   "args": [
+    {
+     "name": "STYLE",
+     "kind": "field",
+     "dropdown": true
+    }
+   ],
+   "statements": []
+  },
+  "looks_sayforsecs": {
+   "sb": "LOOKS_SAYFORSECS",
+   "shape": "stack",
+   "args": [
+    {
+     "name": "MESSAGE",
+     "kind": "input",
+     "shadow": "text",
+     "shadowField": "TEXT",
+     "default": "Hello!"
+    },
+    {
+     "name": "SECS",
+     "kind": "input",
+     "shadow": "math_number",
+     "shadowField": "NUM",
+     "default": "2"
+    }
+   ],
+   "statements": []
+  },
+  "looks_say": {
+   "sb": "LOOKS_SAY",
+   "shape": "stack",
+   "args": [
+    {
+     "name": "MESSAGE",
+     "kind": "input",
+     "shadow": "text",
+     "shadowField": "TEXT",
+     "default": "Hello!"
+    }
+   ],
+   "statements": []
+  },
+  "looks_thinkforsecs": {
+   "sb": "LOOKS_THINKFORSECS",
+   "shape": "stack",
+   "args": [
+    {
+     "name": "MESSAGE",
+     "kind": "input",
+     "shadow": "text",
+     "shadowField": "TEXT",
+     "default": "Hmm..."
+    },
+    {
+     "name": "SECS",
+     "kind": "input",
+     "shadow": "math_number",
+     "shadowField": "NUM",
+     "default": "2"
+    }
+   ],
+   "statements": []
+  },
+  "looks_think": {
+   "sb": "LOOKS_THINK",
+   "shape": "stack",
+   "args": [
+    {
+     "name": "MESSAGE",
+     "kind": "input",
+     "shadow": "text",
+     "shadowField": "TEXT",
+     "default": "Hmm..."
+    }
+   ],
+   "statements": []
+  },
+  "looks_show": {
+   "sb": "LOOKS_SHOW",
+   "shape": "stack",
+   "args": [],
+   "statements": []
+  },
+  "looks_hide": {
+   "sb": "LOOKS_HIDE",
+   "shape": "stack",
+   "args": [],
+   "statements": []
+  },
+  "looks_switchcostumeto": {
+   "sb": "LOOKS_SWITCHCOSTUMETO",
+   "shape": "stack",
+   "args": [
+    {
+     "name": "COSTUME",
+     "kind": "input",
+     "shadow": "looks_costume",
+     "shadowField": "COSTUME",
+     "default": "costume"
+    }
+   ],
+   "statements": []
+  },
+  "looks_nextcostume": {
+   "sb": "LOOKS_NEXTCOSTUME",
+   "shape": "stack",
+   "args": [],
+   "statements": []
+  },
+  "looks_nextbackdrop": {
+   "sb": "LOOKS_NEXTBACKDROP_BLOCK",
+   "shape": "stack",
+   "args": [],
+   "statements": []
+  },
+  "looks_switchbackdropto": {
+   "sb": "LOOKS_SWITCHBACKDROPTO",
+   "shape": "stack",
+   "args": [
+    {
+     "name": "BACKDROP",
+     "kind": "input",
+     "shadow": "looks_backdrops",
+     "shadowField": "BACKDROP",
+     "default": "backdrop"
+    }
+   ],
+   "statements": []
+  },
+  "looks_switchbackdroptoandwait": {
+   "sb": "LOOKS_SWITCHBACKDROPTOANDWAIT",
+   "shape": "stack",
+   "args": [
+    {
+     "name": "BACKDROP",
+     "kind": "input",
+     "shadow": "looks_backdrops",
+     "shadowField": "BACKDROP",
+     "default": "backdrop"
+    }
+   ],
+   "statements": []
+  },
+  "looks_changeeffectby": {
+   "sb": "LOOKS_CHANGEEFFECTBY",
+   "shape": "stack",
+   "args": [
+    {
+     "name": "EFFECT",
+     "kind": "field",
+     "dropdown": true
+    },
+    {
+     "name": "CHANGE",
+     "kind": "input",
+     "shadow": "math_number",
+     "shadowField": "NUM",
+     "default": "25"
+    }
+   ],
+   "statements": []
+  },
+  "looks_seteffectto": {
+   "sb": "LOOKS_SETEFFECTTO",
+   "shape": "stack",
+   "args": [
+    {
+     "name": "EFFECT",
+     "kind": "field",
+     "dropdown": true
+    },
+    {
+     "name": "VALUE",
+     "kind": "input",
+     "shadow": "math_number",
+     "shadowField": "NUM",
+     "default": "0"
+    }
+   ],
+   "statements": []
+  },
+  "looks_cleargraphiceffects": {
+   "sb": "LOOKS_CLEARGRAPHICEFFECTS",
+   "shape": "stack",
+   "args": [],
+   "statements": []
+  },
+  "looks_changesizeby": {
+   "sb": "LOOKS_CHANGESIZEBY",
+   "shape": "stack",
+   "args": [
+    {
+     "name": "CHANGE",
+     "kind": "input",
+     "shadow": "math_number",
+     "shadowField": "NUM",
+     "default": "10"
+    }
+   ],
+   "statements": []
+  },
+  "looks_setsizeto": {
+   "sb": "LOOKS_SETSIZETO",
+   "shape": "stack",
+   "args": [
+    {
+     "name": "SIZE",
+     "kind": "input",
+     "shadow": "math_number",
+     "shadowField": "NUM",
+     "default": "100"
+    }
+   ],
+   "statements": []
+  },
+  "looks_gotofrontback": {
+   "sb": "LOOKS_GOTOFRONTBACK",
+   "shape": "stack",
+   "args": [
+    {
+     "name": "FRONT_BACK",
+     "kind": "field",
+     "dropdown": true
+    }
+   ],
+   "statements": []
+  },
+  "looks_goforwardbackwardlayers": {
+   "sb": "LOOKS_GOFORWARDBACKWARDLAYERS",
+   "shape": "stack",
+   "args": [
+    {
+     "name": "FORWARD_BACKWARD",
+     "kind": "field",
+     "dropdown": true
+    },
+    {
+     "name": "NUM",
+     "kind": "input",
+     "shadow": "math_integer",
+     "shadowField": "NUM",
+     "default": "1"
+    }
+   ],
+   "statements": []
+  },
+  "sound_play": {
+   "sb": "SOUND_PLAY",
+   "shape": "stack",
+   "args": [
+    {
+     "name": "SOUND_MENU",
+     "kind": "input",
+     "shadow": "sound_sounds_menu",
+     "shadowField": "SOUND_MENU",
+     "default": "sound"
+    }
+   ],
+   "statements": []
+  },
+  "sound_changeeffectby": {
+   "sb": "SOUND_CHANGEEFFECTBY",
+   "shape": "stack",
+   "args": [
+    {
+     "name": "EFFECT",
+     "kind": "field",
+     "dropdown": true
+    },
+    {
+     "name": "VALUE",
+     "kind": "input",
+     "shadow": "math_number",
+     "shadowField": "NUM",
+     "default": "10"
+    }
+   ],
+   "statements": []
+  },
+  "sound_seteffectto": {
+   "sb": "SOUND_SETEFFECTO",
+   "shape": "stack",
+   "args": [
+    {
+     "name": "EFFECT",
+     "kind": "field",
+     "dropdown": true
+    },
+    {
+     "name": "VALUE",
+     "kind": "input",
+     "shadow": "math_number",
+     "shadowField": "NUM",
+     "default": "100"
+    }
+   ],
+   "statements": []
+  },
+  "sound_cleareffects": {
+   "sb": "SOUND_CLEAREFFECTS",
+   "shape": "stack",
+   "args": [],
+   "statements": []
+  },
+  "sound_playuntildone": {
+   "sb": "SOUND_PLAYUNTILDONE",
+   "shape": "stack",
+   "args": [
+    {
+     "name": "SOUND_MENU",
+     "kind": "input",
+     "shadow": "sound_sounds_menu",
+     "shadowField": "SOUND_MENU",
+     "default": "sound"
+    }
+   ],
+   "statements": []
+  },
+  "sound_stopallsounds": {
+   "sb": "SOUND_STOPALLSOUNDS",
+   "shape": "stack",
+   "args": [],
+   "statements": []
+  },
+  "sound_changevolumeby": {
+   "sb": "SOUND_CHANGEVOLUMEBY",
+   "shape": "stack",
+   "args": [
+    {
+     "name": "VOLUME",
+     "kind": "input",
+     "shadow": "math_number",
+     "shadowField": "NUM",
+     "default": "-10"
+    }
+   ],
+   "statements": []
+  },
+  "sound_setvolumeto": {
+   "sb": "SOUND_SETVOLUMETO",
+   "shape": "stack",
+   "args": [
+    {
+     "name": "VOLUME",
+     "kind": "input",
+     "shadow": "math_number",
+     "shadowField": "NUM",
+     "default": "100"
+    }
+   ],
+   "statements": []
+  },
+  "pen_clear": {
+   "sb": "pen.clear",
+   "shape": "stack",
+   "args": [],
+   "statements": []
+  },
+  "pen_stamp": {
+   "sb": "pen.stamp",
+   "shape": "stack",
+   "args": [],
+   "statements": []
+  },
+  "pen_penDown": {
+   "sb": "pen.penDown",
+   "shape": "stack",
+   "args": [],
+   "statements": []
+  },
+  "pen_penUp": {
+   "sb": "pen.penUp",
+   "shape": "stack",
+   "args": [],
+   "statements": []
+  },
+  "pen_setPenColorToColor": {
+   "sb": "pen.setColor",
+   "shape": "stack",
+   "args": [
+    {
+     "name": "COLOR",
+     "kind": "input",
+     "shadow": "colour_picker",
+     "shadowField": "COLOUR",
+     "default": "#0000ff"
+    }
+   ],
+   "statements": []
+  },
+  "pen_changePenHueBy": {
+   "sb": "pen.changeHue",
+   "shape": "stack",
+   "args": [
+    {
+     "name": "HUE",
+     "kind": "input",
+     "shadow": "math_number",
+     "shadowField": "NUM",
+     "default": "10"
+    }
+   ],
+   "statements": []
+  },
+  "pen_setPenColorParamTo": {
+   "sb": "pen.setColorParam",
+   "shape": "stack",
+   "args": [
+    {
+     "name": "COLOR_PARAM",
+     "kind": "input",
+     "shadow": "pen_menu_colorParam",
+     "shadowField": "colorParam",
+     "default": "color"
+    },
+    {
+     "name": "VALUE",
+     "kind": "input",
+     "shadow": "math_number",
+     "shadowField": "NUM",
+     "default": "50"
+    }
+   ],
+   "statements": []
+  },
+  "pen_changePenColorParamBy": {
+   "sb": "pen.changeColorParam",
+   "shape": "stack",
+   "args": [
+    {
+     "name": "COLOR_PARAM",
+     "kind": "input",
+     "shadow": "pen_menu_colorParam",
+     "shadowField": "colorParam",
+     "default": "color"
+    },
+    {
+     "name": "VALUE",
+     "kind": "input",
+     "shadow": "math_number",
+     "shadowField": "NUM",
+     "default": "10"
+    }
+   ],
+   "statements": []
+  },
+  "pen_setPenHueToNumber": {
+   "sb": "pen.setHue",
+   "shape": "stack",
+   "args": [
+    {
+     "name": "HUE",
+     "kind": "input",
+     "shadow": "math_number",
+     "shadowField": "NUM",
+     "default": "0"
+    }
+   ],
+   "statements": []
+  },
+  "pen_changePenShadeBy": {
+   "sb": "pen.changeShade",
+   "shape": "stack",
+   "args": [
+    {
+     "name": "SHADE",
+     "kind": "input",
+     "shadow": "math_number",
+     "shadowField": "NUM",
+     "default": "10"
+    }
+   ],
+   "statements": []
+  },
+  "pen_setPenShadeToNumber": {
+   "sb": "pen.setShade",
+   "shape": "stack",
+   "args": [
+    {
+     "name": "SHADE",
+     "kind": "input",
+     "shadow": "math_number",
+     "shadowField": "NUM",
+     "default": "50"
+    }
+   ],
+   "statements": []
+  },
+  "pen_changePenSizeBy": {
+   "sb": "pen.changeSize",
+   "shape": "stack",
+   "args": [
+    {
+     "name": "SIZE",
+     "kind": "input",
+     "shadow": "math_number",
+     "shadowField": "NUM",
+     "default": "1"
+    }
+   ],
+   "statements": []
+  },
+  "pen_setPenSizeTo": {
+   "sb": "pen.setSize",
+   "shape": "stack",
+   "args": [
+    {
+     "name": "SIZE",
+     "kind": "input",
+     "shadow": "math_number",
+     "shadowField": "NUM",
+     "default": "1"
+    }
+   ],
+   "statements": []
+  },
+  "event_whenflagclicked": {
+   "sb": "EVENT_WHENFLAGCLICKED",
+   "shape": "hat",
+   "args": [],
+   "statements": []
+  },
+  "event_whenkeypressed": {
+   "sb": "EVENT_WHENKEYPRESSED",
+   "shape": "hat",
+   "args": [
+    {
+     "name": "KEY_OPTION",
+     "kind": "field",
+     "dropdown": true
+    }
+   ],
+   "statements": []
+  },
+  "event_whenthisspriteclicked": {
+   "sb": "EVENT_WHENTHISSPRITECLICKED",
+   "shape": "hat",
+   "args": [],
+   "statements": []
+  },
+  "event_whenstageclicked": {
+   "sb": "EVENT_WHENSTAGECLICKED",
+   "shape": "hat",
+   "args": [],
+   "statements": []
+  },
+  "event_whenbackdropswitchesto": {
+   "sb": "EVENT_WHENBACKDROPSWITCHESTO",
+   "shape": "hat",
+   "args": [
+    {
+     "name": "BACKDROP",
+     "kind": "field",
+     "dropdown": true
+    }
+   ],
+   "statements": []
+  },
+  "event_whengreaterthan": {
+   "sb": "EVENT_WHENGREATERTHAN",
+   "shape": "hat",
+   "args": [
+    {
+     "name": "WHENGREATERTHANMENU",
+     "kind": "field",
+     "dropdown": true
+    },
+    {
+     "name": "VALUE",
+     "kind": "input",
+     "shadow": "math_number",
+     "shadowField": "NUM",
+     "default": "10"
+    }
+   ],
+   "statements": []
+  },
+  "event_whenbroadcastreceived": {
+   "sb": "EVENT_WHENBROADCASTRECEIVED",
+   "shape": "hat",
+   "args": [
+    {
+     "name": "BROADCAST_OPTION",
+     "kind": "field",
+     "dropdown": true,
+     "variable": "broadcast_msg"
+    }
+   ],
+   "statements": []
+  },
+  "event_broadcast": {
+   "sb": "EVENT_BROADCAST",
+   "shape": "stack",
+   "args": [
+    {
+     "name": "BROADCAST_INPUT",
+     "kind": "input",
+     "shadow": "event_broadcast_menu",
+     "shadowField": "BROADCAST_OPTION",
+     "default": ""
+    }
+   ],
+   "statements": []
+  },
+  "event_broadcastandwait": {
+   "sb": "EVENT_BROADCASTANDWAIT",
+   "shape": "stack",
+   "args": [
+    {
+     "name": "BROADCAST_INPUT",
+     "kind": "input",
+     "shadow": "event_broadcast_menu",
+     "shadowField": "BROADCAST_OPTION",
+     "default": ""
+    }
+   ],
+   "statements": []
+  },
+  "control_wait": {
+   "sb": "CONTROL_WAIT",
+   "shape": "stack",
+   "args": [
+    {
+     "name": "DURATION",
+     "kind": "input",
+     "shadow": "math_positive_number",
+     "shadowField": "NUM",
+     "default": "1"
+    }
+   ],
+   "statements": []
+  },
+  "control_repeat": {
+   "sb": "CONTROL_REPEAT",
+   "shape": "c-block",
+   "args": [
+    {
+     "name": "TIMES",
+     "kind": "input",
+     "shadow": "math_whole_number",
+     "shadowField": "NUM",
+     "default": "10"
+    }
+   ],
+   "statements": [
+    "SUBSTACK"
+   ]
+  },
+  "control_forever": {
+   "sb": "CONTROL_FOREVER",
+   "shape": "c-block cap",
+   "args": [],
+   "statements": [
+    "SUBSTACK"
+   ]
+  },
+  "control_if": {
+   "sb": "CONTROL_IF",
+   "shape": "c-block",
+   "args": [
+    {
+     "name": "CONDITION",
+     "kind": "input"
+    }
+   ],
+   "statements": [
+    "SUBSTACK"
+   ]
+  },
+  "control_wait_until": {
+   "sb": "CONTROL_WAITUNTIL",
+   "shape": "stack",
+   "args": [
+    {
+     "name": "CONDITION",
+     "kind": "input"
+    }
+   ],
+   "statements": []
+  },
+  "control_repeat_until": {
+   "sb": "CONTROL_REPEATUNTIL",
+   "shape": "c-block",
+   "args": [
+    {
+     "name": "CONDITION",
+     "kind": "input"
+    }
+   ],
+   "statements": [
+    "SUBSTACK"
+   ]
+  },
+  "control_stop": {
+   "sb": "CONTROL_STOP",
+   "shape": "cap",
+   "args": [
+    {
+     "name": "STOP_OPTION",
+     "kind": "field",
+     "dropdown": true
+    }
+   ],
+   "statements": []
+  },
+  "control_start_as_clone": {
+   "sb": "CONTROL_STARTASCLONE",
+   "shape": "hat",
+   "args": [],
+   "statements": []
+  },
+  "control_create_clone_of": {
+   "sb": "CONTROL_CREATECLONEOF",
+   "shape": "stack",
+   "args": [
+    {
+     "name": "CLONE_OPTION",
+     "kind": "input",
+     "shadow": "control_create_clone_of_menu",
+     "shadowField": "CLONE_OPTION",
+     "default": ""
+    }
+   ],
+   "statements": []
+  },
+  "control_delete_this_clone": {
+   "sb": "CONTROL_DELETETHISCLONE",
+   "shape": "cap",
+   "args": [],
+   "statements": []
+  },
+  "sensing_askandwait": {
+   "sb": "SENSING_ASKANDWAIT",
+   "shape": "stack",
+   "args": [
+    {
+     "name": "QUESTION",
+     "kind": "input",
+     "shadow": "text",
+     "shadowField": "TEXT",
+     "default": "What's your name?"
+    }
+   ],
+   "statements": []
+  },
+  "sensing_resettimer": {
+   "sb": "SENSING_RESETTIMER",
+   "shape": "stack",
+   "args": [],
+   "statements": []
+  },
+  "data_setvariableto": {
+   "sb": "DATA_SETVARIABLETO",
+   "shape": "stack",
+   "args": [
+    {
+     "name": "VARIABLE",
+     "kind": "field",
+     "dropdown": true,
+     "variable": ""
+    },
+    {
+     "name": "VALUE",
+     "kind": "input",
+     "shadow": "text",
+     "shadowField": "TEXT",
+     "default": "0"
+    }
+   ],
+   "statements": []
+  },
+  "data_changevariableby": {
+   "sb": "DATA_CHANGEVARIABLEBY",
+   "shape": "stack",
+   "args": [
+    {
+     "name": "VARIABLE",
+     "kind": "field",
+     "dropdown": true,
+     "variable": ""
+    },
+    {
+     "name": "VALUE",
+     "kind": "input",
+     "shadow": "math_number",
+     "shadowField": "NUM",
+     "default": "1"
+    }
+   ],
+   "statements": []
+  },
+  "data_showvariable": {
+   "sb": "DATA_SHOWVARIABLE",
+   "shape": "stack",
+   "args": [
+    {
+     "name": "VARIABLE",
+     "kind": "field",
+     "dropdown": true,
+     "variable": ""
+    }
+   ],
+   "statements": []
+  },
+  "data_hidevariable": {
+   "sb": "DATA_HIDEVARIABLE",
+   "shape": "stack",
+   "args": [
+    {
+     "name": "VARIABLE",
+     "kind": "field",
+     "dropdown": true,
+     "variable": ""
+    }
+   ],
+   "statements": []
+  },
+  "data_addtolist": {
+   "sb": "DATA_ADDTOLIST",
+   "shape": "stack",
+   "args": [
+    {
+     "name": "ITEM",
+     "kind": "input",
+     "shadow": "text",
+     "shadowField": "TEXT",
+     "default": "thing"
+    },
+    {
+     "name": "LIST",
+     "kind": "field",
+     "dropdown": true,
+     "variable": "list"
+    }
+   ],
+   "statements": []
+  },
+  "data_deleteoflist": {
+   "sb": "DATA_DELETEOFLIST",
+   "shape": "stack",
+   "args": [
+    {
+     "name": "INDEX",
+     "kind": "input",
+     "shadow": "math_integer",
+     "shadowField": "NUM",
+     "default": "1"
+    },
+    {
+     "name": "LIST",
+     "kind": "field",
+     "dropdown": true,
+     "variable": "list"
+    }
+   ],
+   "statements": []
+  },
+  "data_deletealloflist": {
+   "sb": "DATA_DELETEALLOFLIST",
+   "shape": "stack",
+   "args": [
+    {
+     "name": "LIST",
+     "kind": "field",
+     "dropdown": true,
+     "variable": "list"
+    }
+   ],
+   "statements": []
+  },
+  "motion_ifonedgebounce": {
+   "sb": "MOTION_IFONEDGEBOUNCE",
+   "shape": "stack",
+   "args": [],
+   "statements": []
+  },
+  "data_insertatlist": {
+   "sb": "DATA_INSERTATLIST",
+   "shape": "stack",
+   "args": [
+    {
+     "name": "ITEM",
+     "kind": "input",
+     "shadow": "text",
+     "shadowField": "TEXT",
+     "default": "thing"
+    },
+    {
+     "name": "INDEX",
+     "kind": "input",
+     "shadow": "math_integer",
+     "shadowField": "NUM",
+     "default": "1"
+    },
+    {
+     "name": "LIST",
+     "kind": "field",
+     "dropdown": true,
+     "variable": "list"
+    }
+   ],
+   "statements": []
+  },
+  "data_replaceitemoflist": {
+   "sb": "DATA_REPLACEITEMOFLIST",
+   "shape": "stack",
+   "args": [
+    {
+     "name": "INDEX",
+     "kind": "input",
+     "shadow": "math_integer",
+     "shadowField": "NUM",
+     "default": "1"
+    },
+    {
+     "name": "LIST",
+     "kind": "field",
+     "dropdown": true,
+     "variable": "list"
+    },
+    {
+     "name": "ITEM",
+     "kind": "input",
+     "shadow": "text",
+     "shadowField": "TEXT",
+     "default": "thing"
+    }
+   ],
+   "statements": []
+  },
+  "data_showlist": {
+   "sb": "DATA_SHOWLIST",
+   "shape": "stack",
+   "args": [
+    {
+     "name": "LIST",
+     "kind": "field",
+     "dropdown": true,
+     "variable": "list"
+    }
+   ],
+   "statements": []
+  },
+  "data_hidelist": {
+   "sb": "DATA_HIDELIST",
+   "shape": "stack",
+   "args": [
+    {
+     "name": "LIST",
+     "kind": "field",
+     "dropdown": true,
+     "variable": "list"
+    }
+   ],
+   "statements": []
+  },
+  "motion_xposition": {
+   "sb": "MOTION_XPOSITION",
+   "shape": "reporter",
+   "args": [],
+   "statements": []
+  },
+  "motion_yposition": {
+   "sb": "MOTION_YPOSITION",
+   "shape": "reporter",
+   "args": [],
+   "statements": []
+  },
+  "motion_direction": {
+   "sb": "MOTION_DIRECTION",
+   "shape": "reporter",
+   "args": [],
+   "statements": []
+  },
+  "looks_costumenumbername": {
+   "sb": "LOOKS_COSTUMENUMBERNAME",
+   "shape": "reporter",
+   "args": [
+    {
+     "name": "NUMBER_NAME",
+     "kind": "field",
+     "dropdown": true
+    }
+   ],
+   "statements": []
+  },
+  "looks_size": {
+   "sb": "LOOKS_SIZE",
+   "shape": "reporter",
+   "args": [],
+   "statements": []
+  },
+  "looks_backdropnumbername": {
+   "sb": "LOOKS_BACKDROPNUMBERNAME",
+   "shape": "reporter",
+   "args": [
+    {
+     "name": "NUMBER_NAME",
+     "kind": "field",
+     "dropdown": true
+    }
+   ],
+   "statements": []
+  },
+  "sound_volume": {
+   "sb": "SOUND_VOLUME",
+   "shape": "reporter",
+   "args": [],
+   "statements": []
+  },
+  "sensing_touchingobject": {
+   "sb": "SENSING_TOUCHINGOBJECT",
+   "shape": "boolean",
+   "args": [
+    {
+     "name": "TOUCHINGOBJECTMENU",
+     "kind": "input",
+     "shadow": "sensing_touchingobjectmenu",
+     "shadowField": "TOUCHINGOBJECTMENU",
+     "default": ""
+    }
+   ],
+   "statements": []
+  },
+  "sensing_touchingcolor": {
+   "sb": "SENSING_TOUCHINGCOLOR",
+   "shape": "boolean",
+   "args": [
+    {
+     "name": "COLOR",
+     "kind": "input",
+     "shadow": "colour_picker",
+     "shadowField": null,
+     "default": ""
+    }
+   ],
+   "statements": []
+  },
+  "sensing_coloristouchingcolor": {
+   "sb": "SENSING_COLORISTOUCHINGCOLOR",
+   "shape": "boolean",
+   "args": [
+    {
+     "name": "COLOR",
+     "kind": "input",
+     "shadow": "colour_picker",
+     "shadowField": null,
+     "default": ""
+    },
+    {
+     "name": "COLOR2",
+     "kind": "input",
+     "shadow": "colour_picker",
+     "shadowField": null,
+     "default": ""
+    }
+   ],
+   "statements": []
+  },
+  "sensing_distanceto": {
+   "sb": "SENSING_DISTANCETO",
+   "shape": "reporter",
+   "args": [
+    {
+     "name": "DISTANCETOMENU",
+     "kind": "input",
+     "shadow": "sensing_distancetomenu",
+     "shadowField": "DISTANCETOMENU",
+     "default": ""
+    }
+   ],
+   "statements": []
+  },
+  "sensing_answer": {
+   "sb": "SENSING_ANSWER",
+   "shape": "reporter",
+   "args": [],
+   "statements": []
+  },
+  "sensing_keypressed": {
+   "sb": "SENSING_KEYPRESSED",
+   "shape": "boolean",
+   "args": [
+    {
+     "name": "KEY_OPTION",
+     "kind": "input",
+     "shadow": "sensing_keyoptions",
+     "shadowField": "KEY_OPTION",
+     "default": ""
+    }
+   ],
+   "statements": []
+  },
+  "sensing_mousedown": {
+   "sb": "SENSING_MOUSEDOWN",
+   "shape": "boolean",
+   "args": [],
+   "statements": []
+  },
+  "sensing_mousex": {
+   "sb": "SENSING_MOUSEX",
+   "shape": "reporter",
+   "args": [],
+   "statements": []
+  },
+  "sensing_mousey": {
+   "sb": "SENSING_MOUSEY",
+   "shape": "reporter",
+   "args": [],
+   "statements": []
+  },
+  "sensing_setdragmode": {
+   "sb": "SENSING_SETDRAGMODE",
+   "shape": "stack",
+   "args": [
+    {
+     "name": "DRAG_MODE",
+     "kind": "field",
+     "dropdown": true
+    }
+   ],
+   "statements": []
+  },
+  "sensing_loudness": {
+   "sb": "SENSING_LOUDNESS",
+   "shape": "reporter",
+   "args": [],
+   "statements": []
+  },
+  "sensing_timer": {
+   "sb": "SENSING_TIMER",
+   "shape": "reporter",
+   "args": [],
+   "statements": []
+  },
+  "sensing_of": {
+   "sb": "SENSING_OF",
+   "shape": "reporter",
+   "args": [
+    {
+     "name": "PROPERTY",
+     "kind": "field",
+     "dropdown": true
+    },
+    {
+     "name": "OBJECT",
+     "kind": "input",
+     "shadow": "sensing_of_object_menu",
+     "shadowField": "OBJECT",
+     "default": ""
+    }
+   ],
+   "statements": []
+  },
+  "sensing_current": {
+   "sb": "SENSING_CURRENT",
+   "shape": "reporter",
+   "args": [
+    {
+     "name": "CURRENTMENU",
+     "kind": "field",
+     "dropdown": true
+    }
+   ],
+   "statements": []
+  },
+  "sensing_dayssince2000": {
+   "sb": "SENSING_DAYSSINCE2000",
+   "shape": "reporter",
+   "args": [],
+   "statements": []
+  },
+  "sensing_online": {
+   "sb": "SENSING_ONLINE",
+   "shape": "boolean",
+   "args": [],
+   "statements": []
+  },
+  "sensing_username": {
+   "sb": "SENSING_USERNAME",
+   "shape": "reporter",
+   "args": [],
+   "statements": []
+  },
+  "operator_add": {
+   "sb": "OPERATORS_ADD",
+   "shape": "reporter",
+   "args": [
+    {
+     "name": "NUM1",
+     "kind": "input",
+     "shadow": "math_number",
+     "shadowField": "NUM",
+     "default": ""
+    },
+    {
+     "name": "NUM2",
+     "kind": "input",
+     "shadow": "math_number",
+     "shadowField": "NUM",
+     "default": ""
+    }
+   ],
+   "statements": []
+  },
+  "operator_subtract": {
+   "sb": "OPERATORS_SUBTRACT",
+   "shape": "reporter",
+   "args": [
+    {
+     "name": "NUM1",
+     "kind": "input",
+     "shadow": "math_number",
+     "shadowField": "NUM",
+     "default": ""
+    },
+    {
+     "name": "NUM2",
+     "kind": "input",
+     "shadow": "math_number",
+     "shadowField": "NUM",
+     "default": ""
+    }
+   ],
+   "statements": []
+  },
+  "operator_multiply": {
+   "sb": "OPERATORS_MULTIPLY",
+   "shape": "reporter",
+   "args": [
+    {
+     "name": "NUM1",
+     "kind": "input",
+     "shadow": "math_number",
+     "shadowField": "NUM",
+     "default": ""
+    },
+    {
+     "name": "NUM2",
+     "kind": "input",
+     "shadow": "math_number",
+     "shadowField": "NUM",
+     "default": ""
+    }
+   ],
+   "statements": []
+  },
+  "operator_divide": {
+   "sb": "OPERATORS_DIVIDE",
+   "shape": "reporter",
+   "args": [
+    {
+     "name": "NUM1",
+     "kind": "input",
+     "shadow": "math_number",
+     "shadowField": "NUM",
+     "default": ""
+    },
+    {
+     "name": "NUM2",
+     "kind": "input",
+     "shadow": "math_number",
+     "shadowField": "NUM",
+     "default": ""
+    }
+   ],
+   "statements": []
+  },
+  "operator_random": {
+   "sb": "OPERATORS_RANDOM",
+   "shape": "reporter",
+   "args": [
+    {
+     "name": "FROM",
+     "kind": "input",
+     "shadow": "math_number",
+     "shadowField": "NUM",
+     "default": "1"
+    },
+    {
+     "name": "TO",
+     "kind": "input",
+     "shadow": "math_number",
+     "shadowField": "NUM",
+     "default": "10"
+    }
+   ],
+   "statements": []
+  },
+  "operator_lt": {
+   "sb": "OPERATORS_LT",
+   "shape": "boolean",
+   "args": [
+    {
+     "name": "OPERAND1",
+     "kind": "input",
+     "shadow": "text",
+     "shadowField": "TEXT",
+     "default": ""
+    },
+    {
+     "name": "OPERAND2",
+     "kind": "input",
+     "shadow": "text",
+     "shadowField": "TEXT",
+     "default": "50"
+    }
+   ],
+   "statements": []
+  },
+  "operator_equals": {
+   "sb": "OPERATORS_EQUALS",
+   "shape": "boolean",
+   "args": [
+    {
+     "name": "OPERAND1",
+     "kind": "input",
+     "shadow": "text",
+     "shadowField": "TEXT",
+     "default": ""
+    },
+    {
+     "name": "OPERAND2",
+     "kind": "input",
+     "shadow": "text",
+     "shadowField": "TEXT",
+     "default": "50"
+    }
+   ],
+   "statements": []
+  },
+  "operator_gt": {
+   "sb": "OPERATORS_GT",
+   "shape": "boolean",
+   "args": [
+    {
+     "name": "OPERAND1",
+     "kind": "input",
+     "shadow": "text",
+     "shadowField": "TEXT",
+     "default": ""
+    },
+    {
+     "name": "OPERAND2",
+     "kind": "input",
+     "shadow": "text",
+     "shadowField": "TEXT",
+     "default": "50"
+    }
+   ],
+   "statements": []
+  },
+  "operator_and": {
+   "sb": "OPERATORS_AND",
+   "shape": "boolean",
+   "args": [
+    {
+     "name": "OPERAND1",
+     "kind": "input"
+    },
+    {
+     "name": "OPERAND2",
+     "kind": "input"
+    }
+   ],
+   "statements": []
+  },
+  "operator_or": {
+   "sb": "OPERATORS_OR",
+   "shape": "boolean",
+   "args": [
+    {
+     "name": "OPERAND1",
+     "kind": "input"
+    },
+    {
+     "name": "OPERAND2",
+     "kind": "input"
+    }
+   ],
+   "statements": []
+  },
+  "operator_not": {
+   "sb": "OPERATORS_NOT",
+   "shape": "boolean",
+   "args": [
+    {
+     "name": "OPERAND",
+     "kind": "input"
+    }
+   ],
+   "statements": []
+  },
+  "operator_join": {
+   "sb": "OPERATORS_JOIN",
+   "shape": "reporter",
+   "args": [
+    {
+     "name": "STRING1",
+     "kind": "input",
+     "shadow": "text",
+     "shadowField": "TEXT",
+     "default": "apple "
+    },
+    {
+     "name": "STRING2",
+     "kind": "input",
+     "shadow": "text",
+     "shadowField": "TEXT",
+     "default": "banana"
+    }
+   ],
+   "statements": []
+  },
+  "operator_letter_of": {
+   "sb": "OPERATORS_LETTEROF",
+   "shape": "reporter",
+   "args": [
+    {
+     "name": "LETTER",
+     "kind": "input",
+     "shadow": "math_whole_number",
+     "shadowField": "NUM",
+     "default": "1"
+    },
+    {
+     "name": "STRING",
+     "kind": "input",
+     "shadow": "text",
+     "shadowField": "TEXT",
+     "default": "apple"
+    }
+   ],
+   "statements": []
+  },
+  "operator_length": {
+   "sb": "OPERATORS_LENGTH",
+   "shape": "reporter",
+   "args": [
+    {
+     "name": "STRING",
+     "kind": "input",
+     "shadow": "text",
+     "shadowField": "TEXT",
+     "default": "apple"
+    }
+   ],
+   "statements": []
+  },
+  "operator_mod": {
+   "sb": "OPERATORS_MOD",
+   "shape": "reporter",
+   "args": [
+    {
+     "name": "NUM1",
+     "kind": "input",
+     "shadow": "math_number",
+     "shadowField": "NUM",
+     "default": ""
+    },
+    {
+     "name": "NUM2",
+     "kind": "input",
+     "shadow": "math_number",
+     "shadowField": "NUM",
+     "default": ""
+    }
+   ],
+   "statements": []
+  },
+  "operator_round": {
+   "sb": "OPERATORS_ROUND",
+   "shape": "reporter",
+   "args": [
+    {
+     "name": "NUM",
+     "kind": "input",
+     "shadow": "math_number",
+     "shadowField": "NUM",
+     "default": ""
+    }
+   ],
+   "statements": []
+  },
+  "operator_mathop": {
+   "sb": "OPERATORS_MATHOP",
+   "shape": "reporter",
+   "args": [
+    {
+     "name": "OPERATOR",
+     "kind": "field",
+     "dropdown": true
+    },
+    {
+     "name": "NUM",
+     "kind": "input",
+     "shadow": "math_number",
+     "shadowField": "NUM",
+     "default": ""
+    }
+   ],
+   "statements": []
+  },
+  "operator_contains": {
+   "sb": "OPERATORS_CONTAINS",
+   "shape": "boolean",
+   "args": [
+    {
+     "name": "STRING1",
+     "kind": "input",
+     "shadow": "text",
+     "shadowField": "TEXT",
+     "default": "apple"
+    },
+    {
+     "name": "STRING2",
+     "kind": "input",
+     "shadow": "text",
+     "shadowField": "TEXT",
+     "default": "a"
+    }
+   ],
+   "statements": []
+  },
+  "data_itemoflist": {
+   "sb": "DATA_ITEMOFLIST",
+   "shape": "reporter",
+   "args": [
+    {
+     "name": "INDEX",
+     "kind": "input",
+     "shadow": "math_integer",
+     "shadowField": "NUM",
+     "default": "1"
+    },
+    {
+     "name": "LIST",
+     "kind": "field",
+     "dropdown": true,
+     "variable": "list"
+    }
+   ],
+   "statements": []
+  },
+  "data_itemnumoflist": {
+   "sb": "DATA_ITEMNUMOFLIST",
+   "shape": "reporter",
+   "args": [
+    {
+     "name": "ITEM",
+     "kind": "input",
+     "shadow": "text",
+     "shadowField": "TEXT",
+     "default": "thing"
+    },
+    {
+     "name": "LIST",
+     "kind": "field",
+     "dropdown": true,
+     "variable": "list"
+    }
+   ],
+   "statements": []
+  },
+  "data_lengthoflist": {
+   "sb": "DATA_LENGTHOFLIST",
+   "shape": "reporter",
+   "args": [
+    {
+     "name": "LIST",
+     "kind": "field",
+     "dropdown": true,
+     "variable": "list"
+    }
+   ],
+   "statements": []
+  },
+  "data_listcontainsitem": {
+   "sb": "DATA_LISTCONTAINSITEM",
+   "shape": "boolean",
+   "args": [
+    {
+     "name": "LIST",
+     "kind": "field",
+     "dropdown": true,
+     "variable": "list"
+    },
+    {
+     "name": "ITEM",
+     "kind": "input",
+     "shadow": "text",
+     "shadowField": "TEXT",
+     "default": "thing"
+    }
+   ],
+   "statements": []
+  },
+  "sensing_userid": {
+   "sb": "SENSING_USERID",
+   "shape": "reporter",
+   "args": [],
+   "statements": []
+  },
+  "sensing_loud": {
+   "sb": "SENSING_LOUD",
+   "shape": "boolean",
+   "args": [],
+   "statements": []
+  },
+  "control_if_else": {
+   "sb": "CONTROL_IF",
+   "shape": "c-block",
+   "args": [
+    {
+     "name": "CONDITION",
+     "kind": "input"
+    }
+   ],
+   "statements": [
+    "SUBSTACK",
+    "SUBSTACK2"
+   ]
+  }
+ },
+ "menus": {
+  "pen_menu_colorParam.colorParam": {
+   "options": [
+    "color",
+    "saturation",
+    "brightness",
+    "transparency"
+   ],
+   "de": {
+    "color": "Farbe",
+    "saturation": "Sättigung",
+    "brightness": "Helligkeit",
+    "transparency": "Transparenz"
+   },
+   "en": {
+    "color": "color",
+    "saturation": "saturation",
+    "brightness": "brightness",
+    "transparency": "transparency"
+   }
+  },
+  "motion_pointtowards_menu.TOWARDS": {
+   "options": [
+    "_mouse_"
+   ],
+   "en": {
+    "_mouse_": "mouse-pointer"
+   },
+   "de": {
+    "_mouse_": "Mauszeiger"
+   }
+  },
+  "motion_goto_menu.TO": {
+   "options": [
+    "_random_",
+    "_mouse_"
+   ],
+   "en": {
+    "_random_": "random position",
+    "_mouse_": "mouse-pointer"
+   },
+   "de": {
+    "_random_": "Zufallsposition",
+    "_mouse_": "Mauszeiger"
+   }
+  },
+  "motion_glideto_menu.TO": {
+   "options": [
+    "_random_",
+    "_mouse_"
+   ],
+   "en": {
+    "_random_": "random position",
+    "_mouse_": "mouse-pointer"
+   },
+   "de": {
+    "_random_": "Zufallsposition",
+    "_mouse_": "Mauszeiger"
+   }
+  },
+  "motion_setrotationstyle.STYLE": {
+   "options": [
+    "left-right",
+    "don't rotate",
+    "all around"
+   ],
+   "en": {
+    "left-right": "left-right",
+    "don't rotate": "don't rotate",
+    "all around": "all around"
+   },
+   "de": {
+    "left-right": "links-rechts",
+    "don't rotate": "nicht drehen",
+    "all around": "rundherum"
+   }
+  },
+  "looks_costume.COSTUME": {
+   "options": [
+    ""
+   ],
+   "en": {
+    "": ""
+   },
+   "de": {
+    "": ""
+   }
+  },
+  "looks_backdrops.BACKDROP": {
+   "options": [
+    ""
+   ],
+   "en": {
+    "": ""
+   },
+   "de": {
+    "": ""
+   }
+  },
+  "looks_changeeffectby.EFFECT": {
+   "options": [
+    "COLOR",
+    "FISHEYE",
+    "WHIRL",
+    "PIXELATE",
+    "MOSAIC",
+    "BRIGHTNESS",
+    "GHOST"
+   ],
+   "en": {
+    "COLOR": "color",
+    "FISHEYE": "fisheye",
+    "WHIRL": "whirl",
+    "PIXELATE": "pixelate",
+    "MOSAIC": "mosaic",
+    "BRIGHTNESS": "brightness",
+    "GHOST": "ghost"
+   },
+   "de": {
+    "COLOR": "Farbe",
+    "FISHEYE": "Fischauge",
+    "WHIRL": "Wirbel",
+    "PIXELATE": "Pixel",
+    "MOSAIC": "Mosaik",
+    "BRIGHTNESS": "Helligkeit",
+    "GHOST": "Durchsichtigkeit"
+   }
+  },
+  "looks_seteffectto.EFFECT": {
+   "options": [
+    "COLOR",
+    "FISHEYE",
+    "WHIRL",
+    "PIXELATE",
+    "MOSAIC",
+    "BRIGHTNESS",
+    "GHOST"
+   ],
+   "en": {
+    "COLOR": "color",
+    "FISHEYE": "fisheye",
+    "WHIRL": "whirl",
+    "PIXELATE": "pixelate",
+    "MOSAIC": "mosaic",
+    "BRIGHTNESS": "brightness",
+    "GHOST": "ghost"
+   },
+   "de": {
+    "COLOR": "Farbe",
+    "FISHEYE": "Fischauge",
+    "WHIRL": "Wirbel",
+    "PIXELATE": "Pixel",
+    "MOSAIC": "Mosaik",
+    "BRIGHTNESS": "Helligkeit",
+    "GHOST": "Durchsichtigkeit"
+   }
+  },
+  "looks_gotofrontback.FRONT_BACK": {
+   "options": [
+    "front",
+    "back"
+   ],
+   "en": {
+    "front": "front",
+    "back": "back"
+   },
+   "de": {
+    "front": "vorderster",
+    "back": "hinterster"
+   }
+  },
+  "looks_goforwardbackwardlayers.FORWARD_BACKWARD": {
+   "options": [
+    "forward",
+    "backward"
+   ],
+   "en": {
+    "forward": "forward",
+    "backward": "backward"
+   },
+   "de": {
+    "forward": "vorne",
+    "backward": "hinten"
+   }
+  },
+  "sound_sounds_menu.SOUND_MENU": {
+   "options": [
+    "",
+    "SOUND_RECORD"
+   ],
+   "en": {
+    "": "",
+    "SOUND_RECORD": "record..."
+   },
+   "de": {
+    "": "",
+    "SOUND_RECORD": "zeichne auf..."
+   }
+  },
+  "sound_changeeffectby.EFFECT": {
+   "options": [
+    "PITCH",
+    "PAN"
+   ],
+   "en": {
+    "PITCH": "pitch",
+    "PAN": "pan left/right"
+   },
+   "de": {
+    "PITCH": "Höhe",
+    "PAN": "Aussteuern links/rechts"
+   }
+  },
+  "sound_seteffectto.EFFECT": {
+   "options": [
+    "PITCH",
+    "PAN"
+   ],
+   "en": {
+    "PITCH": "pitch",
+    "PAN": "pan left/right"
+   },
+   "de": {
+    "PITCH": "Höhe",
+    "PAN": "Aussteuern links/rechts"
+   }
+  },
+  "event_whenkeypressed.KEY_OPTION": {
+   "options": [
+    "space",
+    "up arrow",
+    "down arrow",
+    "right arrow",
+    "left arrow",
+    "any",
+    "a",
+    "b",
+    "c",
+    "d",
+    "e",
+    "f",
+    "g",
+    "h",
+    "i",
+    "j",
+    "k",
+    "l",
+    "m",
+    "n",
+    "o",
+    "p",
+    "q",
+    "r",
+    "s",
+    "t",
+    "u",
+    "v",
+    "w",
+    "x",
+    "y",
+    "z",
+    "0",
+    "1",
+    "2",
+    "3",
+    "4",
+    "5",
+    "6",
+    "7",
+    "8",
+    "9"
+   ],
+   "en": {
+    "0": "0",
+    "1": "1",
+    "2": "2",
+    "3": "3",
+    "4": "4",
+    "5": "5",
+    "6": "6",
+    "7": "7",
+    "8": "8",
+    "9": "9",
+    "space": "space",
+    "up arrow": "up arrow",
+    "down arrow": "down arrow",
+    "right arrow": "right arrow",
+    "left arrow": "left arrow",
+    "any": "any",
+    "a": "a",
+    "b": "b",
+    "c": "c",
+    "d": "d",
+    "e": "e",
+    "f": "f",
+    "g": "g",
+    "h": "h",
+    "i": "i",
+    "j": "j",
+    "k": "k",
+    "l": "l",
+    "m": "m",
+    "n": "n",
+    "o": "o",
+    "p": "p",
+    "q": "q",
+    "r": "r",
+    "s": "s",
+    "t": "t",
+    "u": "u",
+    "v": "v",
+    "w": "w",
+    "x": "x",
+    "y": "y",
+    "z": "z"
+   },
+   "de": {
+    "0": "0",
+    "1": "1",
+    "2": "2",
+    "3": "3",
+    "4": "4",
+    "5": "5",
+    "6": "6",
+    "7": "7",
+    "8": "8",
+    "9": "9",
+    "space": "Leertaste",
+    "up arrow": "Pfeil nach oben",
+    "down arrow": "Pfeil nach unten",
+    "right arrow": "Pfeil nach rechts",
+    "left arrow": "Pfeil nach links",
+    "any": "beliebiges",
+    "a": "a",
+    "b": "b",
+    "c": "c",
+    "d": "d",
+    "e": "e",
+    "f": "f",
+    "g": "g",
+    "h": "h",
+    "i": "i",
+    "j": "j",
+    "k": "k",
+    "l": "l",
+    "m": "m",
+    "n": "n",
+    "o": "o",
+    "p": "p",
+    "q": "q",
+    "r": "r",
+    "s": "s",
+    "t": "t",
+    "u": "u",
+    "v": "v",
+    "w": "w",
+    "x": "x",
+    "y": "y",
+    "z": "z"
+   }
+  },
+  "event_whenbackdropswitchesto.BACKDROP": {
+   "options": [
+    ""
+   ],
+   "en": {
+    "": ""
+   },
+   "de": {
+    "": ""
+   }
+  },
+  "event_whengreaterthan.WHENGREATERTHANMENU": {
+   "options": [
+    "LOUDNESS",
+    "TIMER"
+   ],
+   "en": {
+    "LOUDNESS": "loudness",
+    "TIMER": "timer"
+   },
+   "de": {
+    "LOUDNESS": "Lautstärke",
+    "TIMER": "Stoppuhr"
+   }
+  },
+  "control_stop.STOP_OPTION": {
+   "options": [
+    "all",
+    "this script",
+    "other scripts in sprite"
+   ],
+   "en": {
+    "all": "all",
+    "this script": "this script",
+    "other scripts in sprite": "other scripts in sprite"
+   },
+   "de": {
+    "all": "alles",
+    "this script": "dieses Skript",
+    "other scripts in sprite": "andere Skripte der Figur"
+   }
+  },
+  "control_create_clone_of_menu.CLONE_OPTION": {
+   "options": [
+    "_myself_"
+   ],
+   "en": {
+    "_myself_": "myself"
+   },
+   "de": {
+    "_myself_": "mir selbst"
+   }
+  },
+  "looks_costumenumbername.NUMBER_NAME": {
+   "options": [
+    "number",
+    "name"
+   ],
+   "en": {
+    "number": "number",
+    "name": "name"
+   },
+   "de": {
+    "number": "Nummer",
+    "name": "Name"
+   }
+  },
+  "looks_backdropnumbername.NUMBER_NAME": {
+   "options": [
+    "number",
+    "name"
+   ],
+   "en": {
+    "number": "number",
+    "name": "name"
+   },
+   "de": {
+    "number": "Nummer",
+    "name": "Name"
+   }
+  },
+  "sensing_touchingobjectmenu.TOUCHINGOBJECTMENU": {
+   "options": [
+    "_mouse_",
+    "_edge_"
+   ],
+   "en": {
+    "_mouse_": "mouse-pointer",
+    "_edge_": "edge"
+   },
+   "de": {
+    "_mouse_": "Mauszeiger",
+    "_edge_": "Rand"
+   }
+  },
+  "sensing_distancetomenu.DISTANCETOMENU": {
+   "options": [
+    "_mouse_"
+   ],
+   "en": {
+    "_mouse_": "mouse-pointer"
+   },
+   "de": {
+    "_mouse_": "Mauszeiger"
+   }
+  },
+  "sensing_keyoptions.KEY_OPTION": {
+   "options": [
+    "space",
+    "up arrow",
+    "down arrow",
+    "right arrow",
+    "left arrow",
+    "any",
+    "a",
+    "b",
+    "c",
+    "d",
+    "e",
+    "f",
+    "g",
+    "h",
+    "i",
+    "j",
+    "k",
+    "l",
+    "m",
+    "n",
+    "o",
+    "p",
+    "q",
+    "r",
+    "s",
+    "t",
+    "u",
+    "v",
+    "w",
+    "x",
+    "y",
+    "z",
+    "0",
+    "1",
+    "2",
+    "3",
+    "4",
+    "5",
+    "6",
+    "7",
+    "8",
+    "9"
+   ],
+   "en": {
+    "0": "0",
+    "1": "1",
+    "2": "2",
+    "3": "3",
+    "4": "4",
+    "5": "5",
+    "6": "6",
+    "7": "7",
+    "8": "8",
+    "9": "9",
+    "space": "space",
+    "up arrow": "up arrow",
+    "down arrow": "down arrow",
+    "right arrow": "right arrow",
+    "left arrow": "left arrow",
+    "any": "any",
+    "a": "a",
+    "b": "b",
+    "c": "c",
+    "d": "d",
+    "e": "e",
+    "f": "f",
+    "g": "g",
+    "h": "h",
+    "i": "i",
+    "j": "j",
+    "k": "k",
+    "l": "l",
+    "m": "m",
+    "n": "n",
+    "o": "o",
+    "p": "p",
+    "q": "q",
+    "r": "r",
+    "s": "s",
+    "t": "t",
+    "u": "u",
+    "v": "v",
+    "w": "w",
+    "x": "x",
+    "y": "y",
+    "z": "z"
+   },
+   "de": {
+    "0": "0",
+    "1": "1",
+    "2": "2",
+    "3": "3",
+    "4": "4",
+    "5": "5",
+    "6": "6",
+    "7": "7",
+    "8": "8",
+    "9": "9",
+    "space": "Leertaste",
+    "up arrow": "Pfeil nach oben",
+    "down arrow": "Pfeil nach unten",
+    "right arrow": "Pfeil nach rechts",
+    "left arrow": "Pfeil nach links",
+    "any": "beliebiges",
+    "a": "a",
+    "b": "b",
+    "c": "c",
+    "d": "d",
+    "e": "e",
+    "f": "f",
+    "g": "g",
+    "h": "h",
+    "i": "i",
+    "j": "j",
+    "k": "k",
+    "l": "l",
+    "m": "m",
+    "n": "n",
+    "o": "o",
+    "p": "p",
+    "q": "q",
+    "r": "r",
+    "s": "s",
+    "t": "t",
+    "u": "u",
+    "v": "v",
+    "w": "w",
+    "x": "x",
+    "y": "y",
+    "z": "z"
+   }
+  },
+  "sensing_setdragmode.DRAG_MODE": {
+   "options": [
+    "draggable",
+    "not draggable"
+   ],
+   "en": {
+    "draggable": "draggable",
+    "not draggable": "not draggable"
+   },
+   "de": {
+    "draggable": "ziehbar",
+    "not draggable": "nicht ziehbar"
+   }
+  },
+  "sensing_of.PROPERTY": {
+   "options": [
+    ""
+   ],
+   "en": {
+    "": ""
+   },
+   "de": {
+    "": ""
+   }
+  },
+  "sensing_of_object_menu.OBJECT": {
+   "options": [
+    "_stage_"
+   ],
+   "en": {
+    "_stage_": "Stage"
+   },
+   "de": {
+    "_stage_": "Bühne"
+   }
+  },
+  "sensing_current.CURRENTMENU": {
+   "options": [
+    "YEAR",
+    "MONTH",
+    "DATE",
+    "DAYOFWEEK",
+    "HOUR",
+    "MINUTE",
+    "SECOND"
+   ],
+   "en": {
+    "YEAR": "year",
+    "MONTH": "month",
+    "DATE": "date",
+    "DAYOFWEEK": "day of week",
+    "HOUR": "hour",
+    "MINUTE": "minute",
+    "SECOND": "second"
+   },
+   "de": {
+    "YEAR": "Jahr",
+    "MONTH": "Monat",
+    "DATE": "Datum",
+    "DAYOFWEEK": "Wochentag",
+    "HOUR": "Stunde",
+    "MINUTE": "Minute",
+    "SECOND": "Sekunde"
+   }
+  },
+  "operator_mathop.OPERATOR": {
+   "options": [
+    "abs",
+    "floor",
+    "ceiling",
+    "sqrt",
+    "sin",
+    "cos",
+    "tan",
+    "asin",
+    "acos",
+    "atan",
+    "ln",
+    "log",
+    "e ^",
+    "10 ^"
+   ],
+   "en": {
+    "abs": "abs",
+    "floor": "floor",
+    "ceiling": "ceiling",
+    "sqrt": "sqrt",
+    "sin": "sin",
+    "cos": "cos",
+    "tan": "tan",
+    "asin": "asin",
+    "acos": "acos",
+    "atan": "atan",
+    "ln": "ln",
+    "log": "log",
+    "e ^": "e ^",
+    "10 ^": "10 ^"
+   },
+   "de": {
+    "abs": "Betrag",
+    "floor": "abrunden",
+    "ceiling": "aufrunden",
+    "sqrt": "Wurzel",
+    "sin": "sin",
+    "cos": "cos",
+    "tan": "tan",
+    "asin": "asin",
+    "acos": "acos",
+    "atan": "atan",
+    "ln": "ln",
+    "log": "log",
+    "e ^": "e^",
+    "10 ^": "10^"
+   }
+  }
+ }
+}

@@ -1,0 +1,132 @@
+# Full project.yaml — single repository with multiple sections/blocks
+#
+# This pattern is used when one GitHub repo contains all course materials
+# and you want a structured catalog page with HTML separators, sub-groups,
+# per-course tags, and custom PDF timeouts.
+#
+# Real-world reference: https://github.com/andre-dietrich/Datenbankensysteme-Vorlesung
+
+title: >
+  <span style="background-color: rgba(11, 110, 117, 0.75); padding: 10px; color: white; border-radius: 5px;">
+    My Course Title
+  </span>
+
+comment: >
+  <br>
+  <span style="background-color: rgba(255, 140, 66, 0.75); padding: 8px; color: white; border-radius: 5px;">
+    Interactive Course with LiaScript
+  </span>
+
+logo: https://raw.githubusercontent.com/USERNAME/REPO/refs/heads/main/assets/logo.jpg
+
+footer: >
+  <hr>
+  <p>
+    <strong>My Course</strong> – Description for your students<br>
+    <br>
+    Created with <a href="https://liascript.github.io" target="_blank">LiaScript</a>
+  </p>
+
+meta:
+  title: My Course — Interactive Materials
+  description: >
+    A structured collection of course materials covering [topic].
+    All examples run directly in the browser.
+
+navbar:
+  brand: My Course
+  background: "#0B6E75"
+  theme: dark
+  links:
+    - label: Home
+      url: "#"
+    - label: Block 1
+      url: "#block-1"
+    - label: Block 2
+      url: "#block-2"
+
+collection:
+
+  # ----- Introduction -----
+  - html: >
+      <div style="padding: 20px; background-color: rgba(11, 110, 117, 0.1); border-radius: 8px; margin: 20px 0;">
+        <h2>📚 About This Course</h2>
+        <p>
+          This course provides a <strong>hands-on introduction to [topic]</strong>
+          with examples that run directly in the browser via LiaScript.
+        </p>
+      </div>
+
+  # Orientation / syllabus document (no PDF needed, simple entry)
+  - url: https://raw.githubusercontent.com/USERNAME/REPO/refs/heads/main/materials/0-intro.md
+    title: "Course Overview & Organisation"
+    tags:
+      - Introduction
+      - Overview
+
+  # ----- Block 1 -----
+  - html: >
+      <hr>
+      <h2 style="color: #0B6E75;" id="block-1">Block 1: Foundations</h2>
+      <p>Core concepts and terminology.</p>
+
+  - url: https://raw.githubusercontent.com/USERNAME/REPO/refs/heads/main/materials/1-lecture.md
+    title: "L1: Basics"
+    tags:
+      - Fundamentals
+      - Terminology
+
+  - url: https://raw.githubusercontent.com/USERNAME/REPO/refs/heads/main/materials/2-lecture.md
+    title: "L2: Key Concepts"
+    tags:
+      - Core Concepts
+      - Theory
+
+  # For content-heavy lectures with scripts/iframes, increase pdf-timeout
+  - url: https://raw.githubusercontent.com/USERNAME/REPO/refs/heads/main/materials/3-lecture.md
+    title: "L3: Advanced Topic"
+    tags:
+      - Advanced
+      - Hands-on
+    arguments:
+      - pdf-timeout: 120000    # increase for complex interactive content
+
+  # ----- Block 2 -----
+  - html: >
+      <hr>
+      <h2 style="color: #0B6E75;" id="block-2">Block 2: Applied Topics</h2>
+      <p>Practical exercises and real-world applications.</p>
+
+  # Sub-collection: group related lectures in a grid
+  - title: "Practical Exercises"
+    comment: Hands-on exercises for Block 2
+    grid: true
+    tags:
+      - Exercises
+      - Practical
+    collection:
+      - url: https://raw.githubusercontent.com/USERNAME/REPO/refs/heads/main/materials/4-exercise.md
+        title: "Exercise 1"
+        tags:
+          - Beginner
+        arguments:
+          - pdf-timeout: 120000
+      - url: https://raw.githubusercontent.com/USERNAME/REPO/refs/heads/main/materials/5-exercise.md
+        title: "Exercise 2"
+        tags:
+          - Intermediate
+        arguments:
+          - pdf-timeout: 120000
+
+  # ----- Additional Resources -----
+  - html: >
+      <hr>
+      <h2 style="color: #FF8C42;">📖 Additional Resources</h2>
+
+  - url: https://raw.githubusercontent.com/USERNAME/REPO/refs/heads/main/materials/cheat-sheet.md
+    title: "Cheat Sheet"
+    tags:
+      - Reference
+      - Summary
+    arguments:
+      - project-generate-pdf: false   # skip PDF for reference sheets if desired
