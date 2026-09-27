@@ -77,6 +77,20 @@ export class ProjectModel {
     })
   }
 
+  /**
+   * Variables and lists made in the editor start with their current value.
+   * Without this, the value after a run would become the start value.
+   */
+  captureNewVariables() {
+    for (const target of this.originals()) {
+      const variables = this.start.get(target.id)?.variables
+      if (!variables) continue
+      for (const [id, v] of Object.entries<any>(target.variables)) {
+        if (!(id in variables)) variables[id] = Array.isArray(v.value) ? [...v.value] : v.value
+      }
+    }
+  }
+
   /** Captures targets that did not exist yet (e.g. newly added sprites). */
   captureNew() {
     for (const target of this.originals()) {

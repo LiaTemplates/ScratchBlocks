@@ -40,6 +40,11 @@ export class StageView {
   /** false: only sprites marked draggable can be moved by hand */
   dragAll = true
 
+  /** is a sprite being dragged by hand? */
+  get dragging() {
+    return this.dragId !== null
+  }
+
   constructor(callbacks: StageCallbacks) {
     this.callbacks = callbacks
     this.element = document.createElement('div')

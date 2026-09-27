@@ -262,6 +262,24 @@ describe('round trip', () => {
       de,
     ],
     [
+      'monitors of variables and lists',
+      [
+        '[Stage]',
+        'variables: points = 0',
+        'lists: names = Ada, Linus',
+        'monitors: points, names',
+        '',
+        '[Sprite Robo]',
+        'variables: steps = 3',
+        'lists: path =',
+        'monitors: path',
+        '',
+        'when green flag clicked',
+        'add [left] to [path v]',
+      ].join('\n'),
+      en,
+    ],
+    [
       'custom blocks',
       [
         'Definiere springe (hoch) mal <schnell>',
@@ -290,6 +308,21 @@ describe('round trip', () => {
       expect(roundTrip(text, options)).toBe(text)
     })
   }
+})
+
+describe('monitors', () => {
+  it('shows a list monitor of a list', () => {
+    const project = parseScratchText(['[Stage]', 'lists: names =', 'monitors: names'].join('\n'), en)
+    expect(project.monitors).toEqual([
+      expect.objectContaining({ mode: 'list', opcode: 'data_listcontents', params: { LIST: 'names' }, visible: true }),
+    ])
+  })
+
+  it('cannot name a list monitor that has the name of a variable', () => {
+    const project = parseScratchText(['[Stage]', 'variables: x = 0', 'lists: x =', 'monitors: x'].join('\n'), en)
+    project.monitors![0] = { ...project.monitors![0], mode: 'list', opcode: 'data_listcontents', params: { LIST: 'x' } }
+    expect(() => stringifyScratchText(project, en)).toThrow(/same name/)
+  })
 })
 
 describe('every block', async () => {

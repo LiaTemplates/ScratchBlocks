@@ -18,6 +18,7 @@ export class BlocksEditor {
   private profile: Profile
   private container: HTMLElement
   private toolboxTimer: number | null = null
+  private toolboxForce = false
   private toolboxQueue: (() => void)[] = []
   private renderedToolbox = ''
   private listeners: [string, (...args: any[]) => void][] = []
@@ -65,9 +66,11 @@ export class BlocksEditor {
         event.type === E.VAR_RENAME ||
         event.type === E.VAR_DELETE ||
         (event.type === E.BLOCK_DELETE && event.oldJson?.type === 'procedures_definition') ||
-        (event.type === E.BLOCK_CREATE && event.json?.type === 'procedures_definition' && !event.recordUndo)
+        (event.type === E.BLOCK_CREATE && event.json?.type === 'procedures_definition')
       ) {
-        this.requestToolboxUpdate()
+        // the variable and procedure categories are generated: their XML
+        // does not change, their content does
+        this.requestToolboxUpdate(true)
       }
     }
     this.workspace.addChangeListener(this.toolboxUpdateListener)
@@ -155,7 +158,8 @@ export class BlocksEditor {
     return filterToolbox(xml!, this.profile)
   }
 
-  requestToolboxUpdate() {
+  requestToolboxUpdate(force = false) {
+    this.toolboxForce ||= force
     if (this.toolboxTimer !== null) clearTimeout(this.toolboxTimer)
     this.toolboxTimer = window.setTimeout(() => this.updateToolbox(), 0)
   }
@@ -167,8 +171,10 @@ export class BlocksEditor {
 
   private updateToolbox() {
     this.toolboxTimer = null
+    const force = this.toolboxForce
+    this.toolboxForce = false
     const xml = this.toolboxXML()
-    if (xml !== this.renderedToolbox) {
+    if (force || xml !== this.renderedToolbox) {
       const toolbox = this.workspace.getToolbox()
       const flyout = this.workspace.getFlyout()
       const scale = flyout.getWorkspace().scale
@@ -318,6 +324,12 @@ export class BlocksEditor {
 
   resize() {
     this.SB.svgResize(this.workspace)
+  }
+
+  /** Is a block being dragged or a field (text, dropdown) being edited? */
+  isBusy(): boolean {
+    const SB = this.SB
+    return !!(this.workspace.isDragging?.() || SB.WidgetDiv?.isVisible?.() || SB.DropDownDiv?.isVisible?.())
   }
 
   dispose() {

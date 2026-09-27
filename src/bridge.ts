@@ -1,14 +1,20 @@
 // Connects a <lia-scratch> element with the LiaScript code block rendered
 // right before it, without any changes to LiaScript itself:
 //
-// * GUI → text: ACE `setValue` fires ACE's `change`, which makes LiaScript's
-//   <lia-editor> dispatch `editorUpdate`, so Elm stores the new code.
-//   A new version is created by LiaScript on the next ▶ (Run).
+// * GUI → text: small ACE edits (see textdiff.ts) fire ACE's `change`, which
+//   makes LiaScript's <lia-editor> dispatch `editorUpdate`, so Elm stores the
+//   new code. A new version is created by LiaScript on the next ▶ (Run).
+//   In a classroom, each edit is also sent as a delta to the shared text, so
+//   students can build one project together.
+// * Changes of others that the GUI has not loaded yet are merged, not
+//   overwritten (see flush).
 // * text → GUI: when LiaScript switches versions it sets the editor value with
 //   its own events blocked — ACE still emits `change`, which we listen to.
 //
 // Everything here relies on LiaScript's DOM (.lia-code, lia-editor) and
 // therefore lives in this one module.
+
+import { diffText, merge } from './textdiff'
 
 type Ace = any
 
@@ -16,6 +22,7 @@ const HIDDEN_CLASS = 'lia-scratch--editor-hidden'
 
 export class EditorBridge {
   private host: HTMLElement
+  /** the text the GUI is built from; only a load or a write moves it on */
   private lastWritten: string | null = null
   private pending: string | null = null
   private flushTimer: number | null = null
@@ -98,16 +105,20 @@ export class EditorBridge {
       return
     }
 
-    const text = this.pending
+    const mine = this.pending
     this.pending = null
 
-    if (ace.getValue() === text) {
-      this.lastWritten = text
-      return
-    }
-
+    // The GUI was built from `lastWritten`. If the text changed since (a
+    // classroom partner, not yet loaded), keep their changes and hand the
+    // merged text back to the GUI.
+    const current = ace.getValue()
+    const base = this.lastWritten
+    const text = base !== null && current !== base ? merge(base, mine, current) : mine
     this.lastWritten = text
-    ace.setValue(text, 1)
+    if (text !== mine) window.setTimeout(() => this.onExternal(text))
+
+    if (current === text) return
+    applyEdits(ace, current, text)
 
     // Fallback in case the change listener of lia-editor is not attached.
     const el = this.editorElement()
@@ -143,11 +154,10 @@ export class EditorBridge {
         if (timer !== null) clearTimeout(timer)
         timer = window.setTimeout(() => {
           timer = null
+          // lastWritten stays until the text is loaded: until then it is the
+          // base for merging own changes (see flush)
           const text = ace.getValue()
-          if (text !== this.lastWritten) {
-            this.lastWritten = text
-            this.onExternal(text)
-          }
+          if (text !== this.lastWritten) this.onExternal(text)
         }, 60)
       }
       ace.on('change', this.changeHandler)
@@ -232,6 +242,19 @@ export class EditorBridge {
     this.unswap()
     if (this.flushTimer !== null) clearTimeout(this.flushTimer)
   }
+}
+
+/** Writes only what changed — like typing — instead of replacing everything. */
+function applyEdits(ace: Ace, from: string, to: string) {
+  const doc = ace.getSession().getDocument()
+  // back to front, so that the offsets of earlier edits stay valid
+  for (const edit of diffText(from, to).reverse()) {
+    const start = doc.indexToPosition(edit.start, 0)
+    const end = doc.indexToPosition(edit.end, 0)
+    if (edit.end > edit.start) doc.remove({ start, end })
+    if (edit.text) doc.insert(start, edit.text)
+  }
+  if (ace.getValue() !== to) ace.setValue(to, 1)
 }
 
 let styleInjected = false

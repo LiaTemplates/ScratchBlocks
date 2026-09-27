@@ -673,27 +673,19 @@ export function parseScratchText(text: string, options: TextOptions): ProjectJSO
   let monitorY = 5
   for (const target of project.targets) {
     for (const name of target.__show || []) {
-      const scope = [target, builder.stage].find((t) =>
-        Object.values<any>(t.variables).some((v) => v[0] === name)
-      )
+      // a variable of that name, else a list
+      const scopeOf = (kind: 'variables' | 'lists') =>
+        [target, builder.stage].find((t) => Object.values<any>(t[kind]).some((v) => v[0] === name))
+      const kind = scopeOf('variables') ? 'variables' : 'lists'
+      const scope = scopeOf(kind)
       if (!scope) throw new TextError(lang.message('unknownVariable', name))
-      const [id] = Object.entries<any>(scope.variables).find(([, v]) => v[0] === name)!
-      project.monitors!.push({
-        id,
-        mode: 'default',
-        opcode: 'data_variable',
-        params: { VARIABLE: name },
-        spriteName: scope.isStage ? null : scope.name,
-        value: 0,
-        width: 0,
-        height: 0,
-        x: 5,
-        y: monitorY,
-        visible: true,
-        sliderMin: 0,
-        sliderMax: 100,
-        isDiscrete: true,
-      })
+      const [id] = Object.entries<any>(scope[kind]).find(([, v]) => v[0] === name)!
+      const common = { id, spriteName: scope.isStage ? null : scope.name, width: 0, height: 0, x: 5, y: monitorY, visible: true }
+      project.monitors!.push(
+        kind === 'variables'
+          ? { ...common, mode: 'default', opcode: 'data_variable', params: { VARIABLE: name }, value: 0, sliderMin: 0, sliderMax: 100, isDiscrete: true }
+          : { ...common, mode: 'list', opcode: 'data_listcontents', params: { LIST: name }, value: [] }
+      )
       monitorY += 27
     }
     delete target.__show
@@ -975,10 +967,16 @@ export function stringifyScratchText(project: ProjectJSON, options: TextOptions)
   const visibleMonitors = (project.monitors || []).filter((m: any) => m.visible)
   const monitorsOf = (target: any) =>
     visibleMonitors
-      .filter((m: any) => m.opcode === 'data_variable' && (target.isStage ? !m.spriteName : m.spriteName === target.name))
-      .map((m: any) => m.params.VARIABLE)
-  if (visibleMonitors.some((m: any) => m.opcode !== 'data_variable')) {
-    throw new Error('cannot be written as text: list or sensing monitor')
+      .filter((m: any) => (target.isStage ? !m.spriteName : m.spriteName === target.name))
+      .map((m: any) => (m.opcode === 'data_variable' ? m.params.VARIABLE : m.params.LIST))
+  for (const m of visibleMonitors) {
+    if (m.opcode === 'data_variable') continue
+    if (m.opcode !== 'data_listcontents') throw new Error('cannot be written as text: sensing monitor')
+    // "monitors:" names a variable before a list of the same name
+    const scopes = [project.targets.find((t) => !t.isStage && t.name === m.spriteName), stage].filter(Boolean)
+    if (scopes.some((t: any) => Object.values<any>(t.variables || {}).some((v) => v[0] === m.params.LIST))) {
+      throw new Error(`cannot be written as text: monitor of list ${m.params.LIST}, a variable has the same name`)
+    }
   }
 
   const sections = [stage, ...sprites].map((target) => {

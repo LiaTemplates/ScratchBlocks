@@ -33,6 +33,7 @@ export class LiaScratchElement extends HTMLElement {
   private errorBox!: HTMLElement
   private observeTimer: number | null = null
   private syncTimer: number | null = null
+  private externalTimer: number | null = null
   private resizeObserver: ResizeObserver | null = null
   /** serialization of the text as it currently stands in the code block */
   private baseline: string | null = null
@@ -194,7 +195,16 @@ export class LiaScratchElement extends HTMLElement {
     this.stopLanguageWatch = onLanguageChange(() => this.onLanguage())
     if (this.profile.pen) await vm.extensionManager.loadExtensionURL('pen')
 
-    vm.on('PROJECT_CHANGED', () => this.scheduleSync())
+    vm.on('PROJECT_CHANGED', () => {
+      if (!this.isRunning() && vm.runtime.threads.length === 0) this.project.captureNewVariables()
+      this.scheduleSync()
+    })
+    // the checkbox of a variable shows its monitor (`monitors:` in the text),
+    // which the VM does not count as a project change; running scripts
+    // update monitors all the time, those are not edits
+    vm.on('MONITORS_UPDATE', () => {
+      if (!this.isRunning() && vm.runtime.threads.length === 0) this.scheduleSync()
+    })
     vm.on('PROJECT_RUN_STOP', () => this.runDone?.())
 
     // an asset defined later (e.g. by a script on the slide) may fix the text
@@ -234,18 +244,27 @@ export class LiaScratchElement extends HTMLElement {
     this.sprites.render()
   }
 
-  /** Loads text into the VM. The text itself is left untouched. */
-  async load(text: string) {
+  /**
+   * Loads text into the VM. The text itself is left untouched.
+   * `keepTarget`: stay with the sprite that is being edited, if it still exists.
+   */
+  async load(text: string, keepTarget = false) {
+    const editing = keepTarget ? this.vm.editingTarget?.getName() : undefined
     this.loading = true
     try {
       await this.project.load(text)
       this.hideError()
       // edit the main character (the default sprite, Robo) if there is one,
       // else the first sprite with scripts, else the front-most one
-      const sprites = this.vm.runtime.targets.filter((t: any) => !t.isStage && t.isOriginal)
+      const targets = this.vm.runtime.targets.filter((t: any) => t.isOriginal)
+      const sprites = targets.filter((t: any) => !t.isStage)
       const hasScripts = (t: any) => Object.values<any>(t.blocks._blocks).some((b: any) => b.topLevel)
       const main = SPRITES[DEFAULT_SPRITE]?.name
-      const sprite = sprites.find((t: any) => t.getName() === main) ?? sprites.find(hasScripts) ?? sprites[sprites.length - 1]
+      const sprite =
+        targets.find((t: any) => editing !== undefined && t.getName() === editing) ??
+        sprites.find((t: any) => t.getName() === main) ??
+        sprites.find(hasScripts) ??
+        sprites[sprites.length - 1]
       if (sprite) this.vm.setEditingTarget(sprite.id)
       if (this.project.format === 'scratch') this.blocks.workspace.cleanUp()
       await settle()
@@ -259,13 +278,48 @@ export class LiaScratchElement extends HTMLElement {
     }
   }
 
+  /**
+   * The text changed from outside: a version switch, or — in a classroom —
+   * the edit of a partner.
+   */
   private async onExternalText(text: string) {
-    if (text === this.project.loadedText) return
+    if (this.disposed) return
+    // let queued block events reach the VM (and schedule a sync)
+    await settle()
+    // own changes that are not written yet are merged into the new text,
+    // which then comes back here (see EditorBridge.flush)
+    if (this.syncTimer !== null && this.syncNow()) return
+    if (this.busy()) {
+      // do not pull the block from under the mouse or stop a running project
+      if (this.externalTimer === null) {
+        this.externalTimer = window.setTimeout(() => {
+          this.externalTimer = null
+          this.onExternalText(this.bridge.read() ?? '')
+        }, 250)
+      }
+      return
+    }
+    text = this.bridge.read() ?? text
+    if (text === this.project.loadedText) {
+      this.bridge.markSynced(text)
+      return
+    }
     try {
-      await this.load(text)
+      await this.load(text, true)
     } catch {
       // error is shown in the widget, the previous project stays loaded
     }
+  }
+
+  private busy() {
+    return (
+      this.loading ||
+      this.isRunning() ||
+      // own changes still waiting to be written: flushing merges them first
+      this.bridge.hasPending() ||
+      this.stage.dragging ||
+      this.blocks.isBusy()
+    )
   }
 
   scheduleSync() {
@@ -275,23 +329,24 @@ export class LiaScratchElement extends HTMLElement {
   }
 
   /** Writes the current project into the code block, if it changed. */
-  syncNow() {
+  syncNow(): boolean {
     if (this.syncTimer !== null) clearTimeout(this.syncTimer)
     this.syncTimer = null
-    if (this.loading || this.disposed || !this.project || this.baseline === null) return
+    if (this.loading || this.disposed || !this.project || this.baseline === null) return false
 
     let text: string
     try {
       text = this.project.serialize()
     } catch (e) {
       console.warn('LiaScratch: serializing project', e)
-      return
+      return false
     }
-    if (text === this.baseline) return
+    if (text === this.baseline) return false
 
     this.baseline = text
     this.project.loadedText = text
     this.bridge.write(text)
+    return true
   }
 
   isRunning() {
@@ -428,6 +483,7 @@ export class LiaScratchElement extends HTMLElement {
     this.stopRun()
     if (this.observeTimer !== null) clearInterval(this.observeTimer)
     if (this.syncTimer !== null) clearTimeout(this.syncTimer)
+    if (this.externalTimer !== null) clearTimeout(this.externalTimer)
     this.resizeObserver?.disconnect()
     this.bridge?.dispose()
     this.blocks?.dispose()

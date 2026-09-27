@@ -166,6 +166,27 @@ sprite. A click on a sprite below the stage shows its blocks.
 ```
 @Scratch
 
+### Working together in a classroom
+
+    --{{0}}--
+In a LiaScript classroom, several students can build one project together.
+
+Switch the code block to the **collaborative editor** (the classroom button
+below the project). From then on everyone works on the same project:
+
+* Every change in the blocks is sent like typing – only the part that changed.
+  Two students can work on different scripts or sprites at the same time;
+  both changes are kept.
+* If both change the very same value at the same moment, all participants
+  still end up with the same project, but the value may be a mix of both.
+* Changes of others appear right away – except while you are dragging a
+  block or a sprite, editing a field, or while the project is running. Then
+  they follow as soon as you are done.
+
+This works best with the [text format](#the-text-format). A project stored as
+`project.json` is synchronized as well, but changes made at the same time can
+break the JSON; the last working project then stays loaded.
+
 ## Levels
 
     --{{0}}--
@@ -327,7 +348,7 @@ next costume
 | `draggable:`  | can the sprite be dragged while the project runs?           | `no`             |
 | `variables:`  | `name = start value`, separated by commas                   |                  |
 | `lists:`      | `name = value, value, …`, several lists separated by `;`    |                  |
-| `monitors:`   | variables shown on the stage                                |                  |
+| `monitors:`   | variables and lists shown on the stage                      |                  |
 
 Without headers, all scripts belong to the sprite _Robo_ on a white stage.
 
@@ -680,6 +701,7 @@ Structure of `src/`:
 | ----------------------- | ---------------------------------------------------------------- |
 | `element.ts`            | `<lia-scratch>`: interface, ▶/⏹, synchronization                  |
 | `bridge.ts`             | connection to the LiaScript code block (read, write, observe ACE) |
+| `textdiff.ts`           | small edits instead of rewriting the text, merging with a classroom |
 | `project.ts`            | text ⇄ VM, start state of the sprites                            |
 | `format/scratchtext.ts` | readable text format (scratchblocks notation)                    |
 | `format/language.ts`    | everything language-dependent in the text format                 |
