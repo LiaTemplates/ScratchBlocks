@@ -22,9 +22,11 @@
 import { parse } from 'scratchblocks/syntax/index.js'
 import specs from './specs.json'
 import { expandProject, type ProjectJSON } from './json'
-import { defaultSpriteJSON, spriteJSON, stageJSON } from './default'
-import { DEFAULT_BACKDROP, DEFAULT_SPRITE, SPRITES } from '../assets/library'
+import { defaultSpriteJSON, spriteJSON, spritePreset, stageJSON } from './default'
+import { BACKDROPS, COSTUMES, DEFAULT_BACKDROP, DEFAULT_SPRITE, SOUNDS, SPRITES } from '../assets/library'
+import { assetError } from '../assets/registry'
 import { libraryIds } from '../engine'
+import type { Key } from '../i18n'
 import { resolveLang } from '../i18n'
 import { textLanguage, type Property, type TextLanguage } from './language'
 
@@ -506,6 +508,27 @@ function blockText(block: any): string {
     .join(' ')
 }
 
+type AssetKind = 'costume' | 'backdrop' | 'sound'
+
+/** Checks library keys (built-in and the course's own, see registry.ts). */
+function checkAssets(keys: string[], kind: AssetKind, lang: TextLanguage, line: number) {
+  const [ok, known, message]: [(key: string) => boolean, object, Key] =
+    kind === 'sound'
+      ? [(key) => Object.hasOwn(SOUNDS, key), SOUNDS, 'unknownSound']
+      : [
+          // costumes and backdrops are both images, either works for both
+          (key) => Object.hasOwn(COSTUMES, key) || Object.hasOwn(BACKDROPS, key),
+          kind === 'costume' ? COSTUMES : BACKDROPS,
+          kind === 'costume' ? 'unknownCostume' : 'unknownBackdrop',
+        ]
+  for (const key of keys) {
+    if (ok(key)) continue
+    const error = assetError(key)
+    const text = error ? lang.message('assetFailed', key, error) : lang.message(message, key, Object.keys(known).join(', '))
+    throw new TextError(text, line, lang)
+  }
+}
+
 function applyProps(target: any, section: Section, lang: TextLanguage) {
   for (const [prop, value, line] of section.props) {
     const fail = (message: string): never => {
@@ -517,17 +540,23 @@ function applyProps(target: any, section: Section, lang: TextLanguage) {
       return n
     }
 
+    const assets = (keys: string[], kind: AssetKind) => {
+      checkAssets(keys, kind, lang, line)
+      return keys.map((key) => ({ name: key, asset: key }))
+    }
+
     switch (prop) {
       case 'costumes':
       case 'backdrops': {
         const entries = splitList(value)
         const current = entries.findIndex((e) => e.endsWith('*'))
-        target.costumes = entries.map((e) => e.replace(/\*$/, '').trim()).map((key) => ({ name: key, asset: key }))
+        const keys = entries.map((e) => e.replace(/\*$/, '').trim())
+        target.costumes = assets(keys, prop === 'costumes' ? 'costume' : 'backdrop')
         target.currentCostume = Math.max(0, current)
         break
       }
       case 'sounds':
-        target.sounds = splitList(value).map((key) => ({ name: key, asset: key }))
+        target.sounds = assets(splitList(value), 'sound')
         break
       case 'x':
         target.x = number(value)
@@ -593,7 +622,11 @@ export function parseScratchText(text: string, options: TextOptions): ProjectJSO
     }
     let sprite = sprites.find((s) => s.name === section.name)
     if (!sprite) {
-      const lib = SPRITES[DEFAULT_SPRITE]
+      const lib = spritePreset(section.name)
+      // a preset of the course may name assets that do not exist (unless replaced)
+      const has = (prop: Property) => section.props.some(([p]) => p === prop)
+      if (!has('costumes')) checkAssets(lib.costumes, 'costume', lang, section.line)
+      if (!has('sounds')) checkAssets(lib.sounds, 'sound', lang, section.line)
       sprite = spriteJSON(section.name, lib.costumes, lib.sounds, sprites.length + 1)
       sprites.push(sprite)
     }
@@ -862,7 +895,8 @@ function sameList(a: string[], b: string[]) {
 
 function assetKeys(assets: any[], what: string): string[] {
   return assets.map((a) => {
-    const key = a.asset ?? libraryIds.byMd5.get(a.assetId)
+    // by name first: several keys may share the same image (and md5)
+    const key = a.asset ?? (libraryIds.byKey.get(a.name) === a.assetId ? a.name : libraryIds.byMd5.get(a.assetId))
     if (!key || a.name !== key) throw new Error(`cannot be written as text: ${what} ${a.name}`)
     return key
   })
@@ -882,7 +916,7 @@ function costumeList(keys: string[], current: number) {
 function propertyLines(target: any, lang: TextLanguage, monitors: string[]): string[] {
   const key = (id: Property) => lang.word(id)
   const lines: string[] = []
-  const lib = SPRITES[DEFAULT_SPRITE]
+  const lib = spritePreset(target.name)
   const words = lang.words
 
   if (target.isStage) {

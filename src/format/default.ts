@@ -1,6 +1,6 @@
 // Builders for empty stages and sprites (library assets referenced by key).
 
-import { DEFAULT_BACKDROP, DEFAULT_SPRITE, SPRITES } from '../assets/library'
+import { DEFAULT_BACKDROP, DEFAULT_SPRITE, SPRITES, type LibrarySprite } from '../assets/library'
 
 export function stageJSON(backdrops: string[] = [DEFAULT_BACKDROP]) {
   return {
@@ -47,7 +47,18 @@ export function spriteJSON(name: string, costumes: string[], sounds: string[], l
   }
 }
 
+/**
+ * Costumes and sounds a new sprite gets: those of the preset with the same
+ * name (or key, e.g. one defined by the course), otherwise Robo's.
+ */
+export function spritePreset(name: string): LibrarySprite {
+  return (
+    Object.values(SPRITES).find((s) => s.name === name) ??
+    (Object.hasOwn(SPRITES, name.toLowerCase()) ? SPRITES[name.toLowerCase()] : SPRITES[DEFAULT_SPRITE])
+  )
+}
+
 export function defaultSpriteJSON(layerOrder = 1) {
-  const sprite = SPRITES[DEFAULT_SPRITE]
+  const sprite = spritePreset(SPRITES[DEFAULT_SPRITE].name)
   return spriteJSON(sprite.name, sprite.costumes, sprite.sounds, layerOrder)
 }

@@ -21,6 +21,8 @@ export interface Profile {
   maxBlocks: number
   /** reset sprites to their start state on every ▶ */
   resetOnRun: boolean
+  /** may every sprite be dragged on the stage (false: only sprites marked draggable) */
+  dragSprites?: boolean
 }
 
 const LEVEL1 = [
@@ -158,10 +160,39 @@ export function resolveProfile(spec: string | null | undefined): Profile {
   return PROFILES[key] || PROFILES.level4
 }
 
+const profileWaiters = new Map<string, Array<() => void>>()
+
 /** Registers a named profile that extends `spec.base` (default: level4). */
 export function defineProfile(name: string, spec: Partial<Profile> & { base?: string }) {
   const { base, ...rest } = spec
-  PROFILES[name.toLowerCase()] = { ...resolveProfile(base || 'level4'), ...rest }
+  const key = name.toLowerCase()
+  PROFILES[key] = { ...resolveProfile(base || 'level4'), ...rest }
+  profileWaiters.get(key)?.forEach((resolve) => resolve())
+  profileWaiters.delete(key)
+}
+
+/**
+ * Resolves once the profile can be resolved: at once for built-in levels and
+ * JSON, otherwise when a course defines it (its @onload may run later than the
+ * first <lia-scratch> connects). Gives up after `timeout` ms (→ level4).
+ */
+export function whenProfile(spec: string | null | undefined, timeout = 3000): Promise<void> {
+  const raw = (spec || '').trim()
+  const key = raw.toLowerCase().replace(/^stufe(\d)$/, 'level$1').replace(/^(\d)$/, 'level$1')
+  if (!raw || raw.startsWith('{') || Object.hasOwn(PROFILES, key)) return Promise.resolve()
+
+  return new Promise((resolve) => {
+    const timer = setTimeout(() => {
+      console.warn(`LiaScratch: unknown profile "${raw}", using level4`)
+      resolve()
+    }, timeout)
+    const waiters = profileWaiters.get(key) ?? []
+    waiters.push(() => {
+      clearTimeout(timer)
+      resolve()
+    })
+    profileWaiters.set(key, waiters)
+  })
 }
 
 export function isAllowed(profile: Profile, opcode: string): boolean {

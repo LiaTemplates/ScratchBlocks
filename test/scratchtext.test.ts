@@ -12,6 +12,12 @@ vi.mock('../src/engine', () => {
     libraryIds: { byKey, byMd5 },
     storeEmbeddedAsset: () => 'md5-embedded',
     getAssetData: () => null,
+    // assets registered by a course (registry.ts)
+    cacheLibraryAsset: vi.fn((entry: { key: string }) => {
+      byKey.set(entry.key, 'md5-' + entry.key)
+      byMd5.set('md5-' + entry.key, entry.key)
+      return 'md5-' + entry.key
+    }),
   }
 })
 vi.mock('../src/assets/library', async () => {
@@ -28,6 +34,7 @@ vi.mock('../src/assets/library', async () => {
 })
 
 const { parseScratchText, stringifyScratchText } = await import('../src/format/scratchtext')
+const { defineAsset, defineSprite } = await import('../src/assets/registry')
 type TextOptions = import('../src/format/scratchtext').TextOptions
 
 const de: TextOptions = { lang: 'de' }
@@ -148,6 +155,53 @@ describe('parse', () => {
 
   it('reports the line of an unknown block', () => {
     expect(() => parseScratchText('Wenn die grüne Flagge angeklickt\nfliege zum Mond', de)).toThrow(/2/)
+  })
+})
+
+describe('own assets', () => {
+  const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40"><circle cx="20" cy="20" r="20"/></svg>'
+
+  it('accepts registered keys and round trips them', async () => {
+    await defineAsset('dschungel', { type: 'backdrop', svg })
+    const text = ['[Bühne]', 'Hintergründe: dschungel, white*'].join('\n')
+    const project = parseScratchText(text, de)
+    expect(project.targets[0].costumes.map((c: any) => c.name)).toEqual(['dschungel', 'white'])
+    expect(project.targets[0].currentCostume).toBe(1)
+    expect(stringifyScratchText(project, de)).toBe(text)
+  })
+
+  it('reports unknown keys with their line and the known ones', () => {
+    expect(() => parseScratchText(['[Figur Robo]', 'x: 10', 'Kostüme: robo-a, gibtsnicht'].join('\n'), de)).toThrow(
+      'Zeile 3: das Kostüm „gibtsnicht“ gibt es nicht (bekannt: robo-a, robo-b'
+    )
+    expect(() => parseScratchText(['[Sprite Robo]', 'sounds: boing'].join('\n'), en)).toThrow(
+      'Line 2: there is no sound “boing” (known: pop, beep'
+    )
+  })
+
+  it('reports assets that could not be loaded', async () => {
+    const fetch = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('', { status: 404 }))
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {})
+    await defineAsset('kaputt', { type: 'costume', url: 'https://example.org/kaputt.png' })
+    fetch.mockRestore()
+    error.mockRestore()
+    expect(() => parseScratchText(['[Sprite Robo]', 'costumes: kaputt'].join('\n'), en)).toThrow(
+      'Line 2: “kaputt” could not be loaded: HTTP 404'
+    )
+  })
+
+  it('gives new sprites the costumes of their preset', async () => {
+    await defineAsset('kristall', { type: 'costume', svg, rotationCenterX: 20, rotationCenterY: 20 })
+    defineSprite('kristall', { name: 'Kristall', costumes: ['kristall'] })
+    const text = ['[Sprite Kristall]', 'x: 100'].join('\n')
+    const project = parseScratchText(text, en)
+    const kristall = sprite(project, 'Kristall')
+    expect(kristall.costumes.map((c: any) => c.name)).toEqual(['kristall'])
+    expect(kristall.costumes[0]).toMatchObject({ rotationCenterX: 20, rotationCenterY: 20, dataFormat: 'svg' })
+    expect(kristall.sounds).toEqual([])
+    expect(stringifyScratchText(project, en)).toBe(text)
+    // by key as well
+    expect(sprite(parseScratchText('[Sprite kristall]', en), 'kristall').costumes[0].name).toBe('kristall')
   })
 })
 
@@ -324,6 +378,14 @@ describe('README examples', async () => {
   const { readFileSync } = await import('node:fs')
   const readme = readFileSync(new URL('../README.md', import.meta.url), 'utf8')
   const examples = [...readme.matchAll(/``` scratch\n([\s\S]*?)```/g)].map((m) => m[1])
+
+  // the assets the README defines in its examples
+  const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40"/>'
+  await defineAsset('jungle', { type: 'backdrop', svg })
+  await defineAsset('crystal', { type: 'costume', svg })
+  await defineAsset('chime', { type: 'sound', url: 'data:audio/wav;base64,UklGRiQAAABXQVZF' })
+  await defineAsset('star', { type: 'costume', svg })
+  defineSprite('crystal', { name: 'Crystal', costumes: ['crystal'], sounds: ['chime'] })
 
   examples.forEach((text, i) => {
     it(`example ${i + 1} parses and is stable`, () => {

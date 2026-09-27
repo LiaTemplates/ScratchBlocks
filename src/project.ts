@@ -5,6 +5,7 @@
 // (blocks, sprites, costumes, or dragging a sprite while not running).
 
 import type { VirtualMachine } from './engine'
+import { assetsReady } from './assets/registry'
 import { parseJson, stringifyJson, type ProjectJSON } from './format/json'
 import { parseScratchText, stringifyScratchText, type TextOptions } from './format/scratchtext'
 
@@ -46,6 +47,8 @@ export class ProjectModel {
   }
 
   async load(text: string) {
+    // the course's own assets (defineAsset) may still be loading
+    await assetsReady()
     const { project, format } = parseProject(text, this.options)
     await this.vm.loadProject(project)
     this.format = format

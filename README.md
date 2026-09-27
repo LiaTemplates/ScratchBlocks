@@ -1,7 +1,7 @@
 <!--
 author:   André Dietrich
 email:    LiaScript@web.de
-version:  0.1.1
+version:  0.2.0
 edit:     true
 language: en
 narrator: US English Female
@@ -39,12 +39,29 @@ attribute: [scratchblocks](https://github.com/scratchblocks/scratchblocks)
 
 @Scratch.check:   @Scratch._check(@uid,@0)
 
+@Scratch.blocks:  @Scratch._blocks(@uid,```@0```)
+@Scratch.bloecke: @Scratch._blocks(@uid,```@0```)
+
 @Scratch._run
 <script>
 window.LiaScratch.run("@0", send, "@'input", "@1")
 </script>
 
 <lia-scratch id="@0" profile="@1"></lia-scratch>
+@end
+
+@Scratch._blocks
+<script run-once="true" modify="false" style="display:block">
+(function draw (tries) {
+  if (window.LiaScratch) {
+    send.lia("HTML: " + window.LiaScratch.blocks(`@1`))
+    send.lia("LIA: stop")
+  } else if (tries < 200) {
+    setTimeout(() => draw(tries + 1), 50)
+  }
+})(0)
+"LIA: wait"
+</script>
 @end
 
 @Scratch._check
@@ -96,7 +113,7 @@ header of your course.
 
 Fixed version (recommended, will not change anymore):
 
-`import: https://raw.githubusercontent.com/LiaTemplates/ScratchBlocks/0.1.1/README.md`
+`import: https://raw.githubusercontent.com/LiaTemplates/ScratchBlocks/0.2.0/README.md`
 
 Latest version (may change at any time):
 
@@ -117,6 +134,12 @@ Then attach one of the macros to a code block:
 The German names `@Scratch.stufe1` … `@Scratch.stufe4` and
 `@Scratch.profil(name)` work as well.
 
+In the `@onload` of your course you can also register your own profiles
+(`window.LiaScratch.defineProfile`, see [Custom profiles](#custom-profiles))
+and your own costumes, backdrops, sounds and sprites
+(`window.LiaScratch.defineAsset` and `defineSprite`, see
+[Own sprites, backdrops and sounds](#own-sprites-backdrops-and-sounds)).
+
 ## How it works
 
     --{{0}}--
@@ -134,6 +157,10 @@ is always the text in the code block.
 
 If the code block is empty, the project starts with a white stage and the
 sprite _Robo_.
+
+When a project opens, the blocks of _Robo_ are shown. Without a sprite
+_Robo_, the first sprite with scripts is shown, otherwise the front-most
+sprite. A click on a sprite below the stage shows its blocks.
 
 ``` scratch
 ```
@@ -290,7 +317,7 @@ next costume
 
 | Property      | Meaning                                                     | Default          |
 | ------------- | ----------------------------------------------------------- | ---------------- |
-| `costumes:`   | costumes from the [library](#sprites-and-sounds); a `*` marks the current one, e.g. `robo-a, robo-b*` | `robo-a, robo-b` |
+| `costumes:`   | costumes from the [library](#sprites-and-sounds) or [your own](#own-sprites-backdrops-and-sounds); a `*` marks the current one, e.g. `robo-a, robo-b*` | `robo-a, robo-b` |
 | `backdrops:`  | backdrops of the stage, `*` marks the current one            | `white`          |
 | `sounds:`     | sounds from the library                                     | `pop`            |
 | `x:`, `y:`    | start position                                              | `0`              |
@@ -366,6 +393,33 @@ images and sounds are embedded.
 ```
 @Scratch
 
+## Pictures of blocks
+
+    --{{0}}--
+Sometimes you only want to show blocks, for example in a hint or next to an
+explanation. `@Scratch.blocks` draws them as a picture, without an editor and
+without a stage. The blocks are written in the same notation and appear in the
+language of the course.
+
+```` markdown
+``` scratch @Scratch.blocks
+when green flag clicked
+repeat (10)
+  move (25) steps
+end
+```
+````
+
+``` scratch @Scratch.blocks
+when green flag clicked
+repeat (10)
+  move (25) steps
+end
+```
+
+The German alias is `@Scratch.bloecke`. The picture is an SVG with the text of
+the blocks as its accessible label.
+
 ## Tasks with checks
 
     --{{0}}--
@@ -401,7 +455,15 @@ These commands are available in a check (German names in brackets):
 | `sprite(name)` (`figur`)                    | state of a sprite: `x`, `y`, `direction`, `size`, `costume`, `visible`, `says`, `variable(name)`, `list(name)` |
 | `stage` (`buehne`)                          | state of the stage: `backdrop`, `variable(name)`, `list(name)`       |
 | `blocks.count()` (`bloecke.anzahl()`)       | number of blocks in the project                                      |
+| `blocks.count(opcode)` (`bloecke.anzahl()`) | how often the project uses this block                                |
 | `blocks.uses(opcode)` (`bloecke.nutzt()`)   | does the project use this block?                                     |
+| `blocks.fields(opcode, field)` (`bloecke.felder()`) | values of a field in all these blocks, e.g. `blocks.fields("event_whenkeypressed", "KEY_OPTION")` → `["right arrow", "left arrow"]` |
+| `blocks.of(name)` (`bloecke.von()`)         | the same queries, only for the blocks of one sprite (or `"Stage"`)   |
+| `blocks.scripts()` (`bloecke.skripte()`)    | every script as a list of block names in running order, e.g. `["event_whenflagclicked", "looks_say", "control_wait", "looks_say"]` |
+
+Block queries only count blocks that are part of a script, i.e. hang below a
+hat block such as `when green flag clicked`. Loose blocks lying next to a
+script do not count.
 
 The names of the blocks (`control_repeat`, `motion_movesteps` …) can be found
 in the [Scratch Wiki](https://en.scratch-wiki.info/wiki/List_of_Block_Opcodes).
@@ -417,13 +479,15 @@ are allowed; `maxBlocks` limits the number of blocks.
 
 ``` html
 <!--
-import: https://raw.githubusercontent.com/LiaTemplates/ScratchBlocks/0.1.1/README.md
+import: https://raw.githubusercontent.com/LiaTemplates/ScratchBlocks/0.2.0/README.md
 
 @onload
-window.LiaScratch.defineProfile("maze", {
-  base: "level1",
-  blocks: ["event_whenflagclicked", "motion_movesteps", "motion_turnright"],
-  maxBlocks: 5
+;(window.LiaScratchSetup = window.LiaScratchSetup || []).push(function (scratch) {
+  scratch.defineProfile("maze", {
+    base: "level1",
+    blocks: ["event_whenflagclicked", "motion_movesteps", "motion_turnright"],
+    maxBlocks: 5
+  })
 })
 @end
 -->
@@ -440,15 +504,17 @@ Use it with `@Scratch.profile(maze)`.
 | `sprites`    | may sprites be added?                                |
 | `textView`   | show the **Text** button                             |
 | `sb3`        | buttons to load and save `.sb3`                      |
-| `speech`     | read blocks aloud                                    |
+| `speech`     | read blocks aloud, and the result of a check (the first hint) |
 | `maxBlocks`  | at most this many blocks (`0` = unlimited)           |
 | `resetOnRun` | put sprites back to their start state on ▶           |
+| `dragSprites`| `false`: only sprites with `draggable: yes` can be moved on the stage (keeps start positions fixed in tasks) |
 
 ## Sprites and sounds
 
     --{{0}}--
-All sprites, backdrops and sounds are part of the template, so they also work
-offline.
+The template brings a small library of its own: these sprites, backdrops and
+sounds are part of the template, so they also work offline. Your course can
+add more, see the next section.
 
 | Name     | Type     |
 | -------- | -------- |
@@ -461,6 +527,138 @@ offline.
 All of them were made for this template and are in the public domain
 ([CC0](https://creativecommons.org/publicdomain/zero/1.0/)). The Scratch Cat is
 deliberately not used, it is a trademark of the Scratch Foundation.
+
+## Own sprites, backdrops and sounds
+
+    --{{0}}--
+Your course can bring its own images and sounds. Register them once in the
+header of your course, then use them by name, just like the built-in ones.
+
+Every asset gets a short name (its key). `defineSprite` combines costumes and
+sounds into a sprite: a new sprite with this name starts with them.
+
+``` html
+<!--
+import: https://raw.githubusercontent.com/LiaTemplates/ScratchBlocks/0.2.0/README.md
+
+@onload
+;(window.LiaScratchSetup = window.LiaScratchSetup || []).push(function (scratch) {
+  scratch.defineAsset("jungle", {
+    type: "backdrop",
+    url: "https://raw.githubusercontent.com/your-name/your-course/main/assets/jungle.png"
+  })
+  scratch.defineAsset("crystal", {
+    type: "costume",
+    url: "https://raw.githubusercontent.com/your-name/your-course/main/assets/crystal.svg",
+    rotationCenterX: 20,
+    rotationCenterY: 20
+  })
+  scratch.defineAsset("chime", {
+    type: "sound",
+    url: "https://raw.githubusercontent.com/your-name/your-course/main/assets/chime.mp3"
+  })
+  scratch.defineSprite("crystal", {
+    name: "Crystal",
+    costumes: ["crystal"],
+    sounds: ["chime"]
+  })
+})
+@end
+-->
+```
+
+In the code block:
+
+``` scratch
+[Stage]
+backdrops: jungle, white*
+
+[Sprite Crystal]
+x: 100
+
+when this sprite clicked
+play sound [chime v]
+switch backdrop to [jungle v]
+```
+
+| Option             | Meaning                                                                  |
+| ------------------ | ------------------------------------------------------------------------ |
+| `type`             | `"costume"`, `"backdrop"` or `"sound"`                                   |
+| `url`              | address of the file: `https://…`, relative to the course, or a `data:` URL |
+| `svg`              | the SVG image itself as text, instead of `url`                           |
+| `format`           | `"svg"`, `"png"`, `"jpg"`, `"wav"` or `"mp3"` – only needed if it cannot be detected from the file |
+| `rotationCenterX`, `rotationCenterY` | rotation centre in pixels of the image; default: its centre |
+| `bitmapResolution` | `2` for PNG/JPG images drawn at double resolution (like Scratch's own)   |
+
+`defineSprite(key, { name, costumes, sounds })` registers a sprite: a sprite
+section `[Sprite Crystal]` (its name or its key) without `costumes:` starts with
+these costumes and sounds. Without `name`, the key is the name of the sprite.
+
+Notes:
+
+* The key is also the name of the costume in Scratch and in
+  [checks](#tasks-with-checks): `sprite("Crystal").costume == "crystal"`.
+  It may contain letters, digits, `_` and `-`. The built-in names (`robo-a`,
+  `white`, `pop` …) cannot be redefined.
+* Prefer absolute URLs, e.g. of files in the GitHub repository of your course.
+  The server must allow loading from other pages (CORS), GitHub does.
+  Relative URLs are resolved against the README of the course, as far as the
+  page reveals it.
+* In PNG and JPG images, one image pixel is one pixel on the stage (480 × 360).
+  Backdrops of at least 960 pixels width count as double resolution, so a
+  960 × 720 backdrop fills the stage. For sharp costumes, draw them twice as
+  large and set `bitmapResolution: 2`. GIF and WebP are converted to PNG.
+* The course's `@onload` can run before this template is loaded, so
+  `window.LiaScratch` may not exist yet. That is why the definitions are pushed
+  into `window.LiaScratchSetup`: the template runs them as soon as it is
+  loaded, before the first code block starts. Once it is loaded, a push runs
+  immediately. The same works for `defineProfile`; a code block with a profile
+  that is not defined yet waits up to 3 seconds for it.
+* Assets are loaded in the background; code blocks wait for them. If a name is
+  unknown or a file could not be loaded, the code block shows it with its line
+  number.
+
+### Try it
+
+    --{{0}}--
+This slide registers a costume itself, with a script right above the code
+block. In your course, `defineAsset` belongs into `@onload` in the header.
+
+``` html
+<script run-once modify="false">
+(function define() {
+  // on a direct link to this slide, the template may still be loading
+  if (!window.LiaScratch) { setTimeout(define, 100); return }
+  window.LiaScratch.defineAsset("star", {
+    type: "costume",
+    svg: '<svg xmlns="http://www.w3.org/2000/svg" width="60" height="60">…</svg>'
+  })
+})()
+</script>
+```
+
+<script run-once modify="false">
+(function define() {
+  if (!window.LiaScratch) { setTimeout(define, 100); return }
+  window.LiaScratch.defineAsset("star", {
+    type: "costume",
+    svg: '<svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 60 60"><polygon points="30,2 37,22 58,22 41,35 47,56 30,43 13,56 19,35 2,22 23,22" fill="#ffd21f" stroke="#c78a00" stroke-width="3" stroke-linejoin="round"/></svg>'
+  })
+})()
+</script>
+
+``` scratch
+[Sprite Robo]
+costumes: robo-a, star
+
+when green flag clicked
+repeat (8)
+  next costume
+  turn right (45) degrees
+  wait (0.3) seconds
+end
+```
+@Scratch
 
 ## Implementation
 
@@ -492,6 +690,8 @@ Structure of `src/`:
 | `workspace.ts`          | scratch-blocks workspace, toolbox per profile                    |
 | `stage.ts`              | stage: mouse, keyboard, dragging sprites, "ask and wait"         |
 | `profiles.ts`           | levels 1–4 and custom profiles                                   |
+| `assets/library.ts`     | built-in costumes, backdrops, sounds and sprites                 |
+| `assets/registry.ts`    | own assets of a course (`defineAsset`, `defineSprite`)           |
 | `check.ts`              | commands for checks                                              |
 | `dom-guard.ts`          | keeps foreign nodes out of `<body>` (see below)                  |
 | `vendor/scratch-gui/`   | glue code from scratch-gui 15.1.1 (AGPL-3.0)                     |

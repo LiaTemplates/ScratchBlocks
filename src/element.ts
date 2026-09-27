@@ -4,11 +4,13 @@
 import { EditorBridge } from './bridge'
 import { createEngine, destroyEngine, type VirtualMachine } from './engine'
 import { ProjectModel } from './project'
-import { resolveProfile, type Profile } from './profiles'
+import { resolveProfile, whenProfile, type Profile } from './profiles'
 import { StageView } from './stage'
 import { BlocksEditor } from './workspace'
 import { SpritePane } from './ui/sprites'
 import { courseLang, lang, onLanguageChange, t, vmMessages, type Key } from './i18n'
+import { onAssetsChanged } from './assets/registry'
+import { DEFAULT_SPRITE, SPRITES } from './assets/library'
 import { speak } from './speech'
 
 export type Send = {
@@ -38,20 +40,31 @@ export class LiaScratchElement extends HTMLElement {
   private send: Send | null = null
   private runDone: (() => void) | null = null
   private disposed = false
+  private started = false
+  /** speech bubble texts at the end of the last runFor (by target id) */
+  readonly saidAtEnd = new Map<string, string>()
   private labels: [HTMLElement, Key][] = []
   private stopLanguageWatch: (() => void) | null = null
+  private stopAssetWatch: (() => void) | null = null
 
   /** resolves once the engine is up and the first project is loaded */
   ready!: Promise<void>
 
   connectedCallback() {
-    if (this.root) return
-    this.profile = resolveProfile(this.getAttribute('profile'))
-    this.buildDOM()
-    this.ready = this.init().catch((e) => {
-      console.error('LiaScratch:', e)
-      this.showError(String(e?.message || e))
-    })
+    if (this.started) return
+    this.started = true
+    const spec = this.getAttribute('profile')
+    this.ready = whenProfile(spec)
+      .then(() => {
+        if (this.disposed) return
+        this.profile = resolveProfile(spec)
+        this.buildDOM()
+        return this.init()
+      })
+      .catch((e) => {
+        console.error('LiaScratch:', e)
+        if (this.errorBox) this.showError(String(e?.message || e))
+      })
   }
 
   disconnectedCallback() {
@@ -88,6 +101,7 @@ export class LiaScratchElement extends HTMLElement {
       },
       onSpriteSelected: (id) => this.vm.setEditingTarget(id),
     })
+    this.stage.dragAll = this.profile.dragSprites !== false
 
     this.errorBox = document.createElement('div')
     this.errorBox.className = 'ls-error'
@@ -183,6 +197,13 @@ export class LiaScratchElement extends HTMLElement {
     vm.on('PROJECT_CHANGED', () => this.scheduleSync())
     vm.on('PROJECT_RUN_STOP', () => this.runDone?.())
 
+    // an asset defined later (e.g. by a script on the slide) may fix the text
+    this.stopAssetWatch = onAssetsChanged(() => {
+      if (!this.errorBox.hidden && !this.loading && !this.disposed && !this.isRunning()) {
+        this.load(this.bridge.read() ?? '').catch(() => {})
+      }
+    })
+
     await this.load(this.bridge.read() ?? '')
   }
 
@@ -219,7 +240,12 @@ export class LiaScratchElement extends HTMLElement {
     try {
       await this.project.load(text)
       this.hideError()
-      const sprite = this.vm.runtime.targets.find((t: any) => !t.isStage && t.isOriginal)
+      // edit the main character (the default sprite, Robo) if there is one,
+      // else the first sprite with scripts, else the front-most one
+      const sprites = this.vm.runtime.targets.filter((t: any) => !t.isStage && t.isOriginal)
+      const hasScripts = (t: any) => Object.values<any>(t.blocks._blocks).some((b: any) => b.topLevel)
+      const main = SPRITES[DEFAULT_SPRITE]?.name
+      const sprite = sprites.find((t: any) => t.getName() === main) ?? sprites.find(hasScripts) ?? sprites[sprites.length - 1]
       if (sprite) this.vm.setEditingTarget(sprite.id)
       if (this.project.format === 'scratch') this.blocks.workspace.cleanUp()
       await settle()
@@ -301,6 +327,7 @@ export class LiaScratchElement extends HTMLElement {
 
   /** Starts the green flag and waits until all scripts end (or timeout). */
   async runFor(seconds: number) {
+    this.saidAtEnd.clear()
     if (this.profile.resetOnRun) this.project.reset()
     await new Promise<void>((resolve) => {
       const timer = setTimeout(resolve, seconds * 1000)
@@ -314,7 +341,15 @@ export class LiaScratchElement extends HTMLElement {
       })
     })
     this.runDone = null
-    this.vm.stopAll()
+    // remember the speech bubbles: stopping clears them, but checks read them
+    this.saidAtEnd.clear()
+    for (const target of this.vm.runtime.targets) {
+      const text = target.getCustomState?.('Scratch.looks')?.text
+      if (text) this.saidAtEnd.set(target.id, String(text))
+    }
+    // only stop what is still running (e.g. forever loops); a project that
+    // ended on its own keeps its bubbles visible
+    if (this.vm.runtime.threads.length > 0) this.vm.stopAll()
   }
 
   stop() {
@@ -389,6 +424,7 @@ export class LiaScratchElement extends HTMLElement {
     if (this.disposed) return
     this.disposed = true
     this.stopLanguageWatch?.()
+    this.stopAssetWatch?.()
     this.stopRun()
     if (this.observeTimer !== null) clearInterval(this.observeTimer)
     if (this.syncTimer !== null) clearTimeout(this.syncTimer)

@@ -3,6 +3,7 @@
 // Assets are addressed by a stable, language-neutral key (e.g. "robo-a").
 // When an engine starts, every asset is cached in scratch-storage, which
 // computes its md5 — this md5 is what ends up as `assetId` in project.json.
+// Courses can add their own entries at runtime, see registry.ts.
 
 import roboA from 'bundle-text:./sprites/robo-a.svg'
 import roboB from 'bundle-text:./sprites/robo-b.svg'
@@ -11,18 +12,20 @@ import { tone } from './sounds'
 
 export interface LibraryCostume {
   key: string
-  dataFormat: 'svg' | 'png'
+  dataFormat: 'svg' | 'png' | 'jpg'
   data: string | Uint8Array
-  rotationCenterX: number
-  rotationCenterY: number
+  /** unset: the VM uses the centre of the image */
+  rotationCenterX?: number
+  rotationCenterY?: number
 }
 
 export interface LibrarySound {
   key: string
-  dataFormat: 'wav'
+  dataFormat: 'wav' | 'mp3'
   data: Uint8Array
-  rate: number
-  sampleCount: number
+  /** unset: the VM takes them from the decoded audio */
+  rate?: number
+  sampleCount?: number
 }
 
 export interface LibrarySprite {

@@ -37,6 +37,8 @@ export class StageView {
   private answer: HTMLInputElement
   private resizeObserver: ResizeObserver
   private callbacks: StageCallbacks
+  /** false: only sprites marked draggable can be moved by hand */
+  dragAll = true
 
   constructor(callbacks: StageCallbacks) {
     this.callbacks = callbacks
@@ -200,6 +202,10 @@ export class StageView {
     if (targetId === null) return
 
     const target = vm.runtime.getTargetById(targetId)
+    if (!this.dragAll && !target.draggable) {
+      this.callbacks.onSpriteSelected(targetId)
+      return
+    }
     target.goToFront()
     const [mx, my] = this.scratchCoords(x, y)
     this.dragOffset = [target.x - mx, -(target.y + my)]

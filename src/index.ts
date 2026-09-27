@@ -5,8 +5,11 @@ import css from 'bundle-text:./ui/style.css'
 import { LiaScratchElement, type Send } from './element'
 import { createCheckApi } from './check'
 import { defineProfile } from './profiles'
+import { defineAsset, defineSprite } from './assets/registry'
 import { t } from './i18n'
 import { guardBody } from './dom-guard'
+import { renderBlocks } from './blockimage'
+import { speak } from './speech'
 
 function element(id: string): LiaScratchElement {
   const el = document.getElementById(id)
@@ -45,6 +48,11 @@ const LiaScratch = {
       } else {
         send.lia(`✔ ${t('passed')}`, [], true)
       }
+      // profiles for young children read the result aloud: the first hint is
+      // the most visible observation, more would be too much to listen to
+      if (el.profile.speech) {
+        speak(failures.length ? `${t('failed').replace(/:$/, '.')} ${failures[0]}` : t('passed'))
+      }
       el.finish()
     })().catch((e) => {
       send.lia(String(e?.message || e), [], false)
@@ -55,11 +63,23 @@ const LiaScratch = {
 
   /** Registers a custom profile, used with @Scratch.profil(name). */
   defineProfile,
+
+  /** Registers a costume, backdrop or sound of the course, used by its key. */
+  defineAsset,
+
+  /** Registers a sprite preset: costumes and sounds of new sprites with its name. */
+  defineSprite,
+
+  /** A static picture of blocks (@Scratch.blocks) as SVG markup. */
+  blocks(code: string, scale?: number): string {
+    return renderBlocks(code, scale)
+  },
 }
 
 declare global {
   interface Window {
     LiaScratch: typeof LiaScratch
+    LiaScratchSetup?: Array<(api: typeof LiaScratch) => void> | { push: (fn: (api: typeof LiaScratch) => void) => void }
   }
 }
 
@@ -68,6 +88,21 @@ if (!customElements.get('lia-scratch')) {
   const style = document.createElement('style')
   style.textContent = css
   document.head.appendChild(style)
-  customElements.define('lia-scratch', LiaScratchElement)
   window.LiaScratch = LiaScratch
+
+  // A course's @onload may run before this script is loaded. It can queue its
+  // definitions (assets, sprites, profiles) in window.LiaScratchSetup; they
+  // run here, before any <lia-scratch> starts. Later pushes run at once.
+  const setup = (fn: (api: typeof LiaScratch) => void) => {
+    try {
+      fn(LiaScratch)
+    } catch (e) {
+      console.error('LiaScratch setup:', e)
+    }
+  }
+  const queued = window.LiaScratchSetup
+  if (Array.isArray(queued)) queued.forEach(setup)
+  window.LiaScratchSetup = { push: setup }
+
+  customElements.define('lia-scratch', LiaScratchElement)
 }

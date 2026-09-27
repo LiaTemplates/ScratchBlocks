@@ -7,6 +7,7 @@
 // * every block sits on its own line, which keeps the text diff-friendly.
 
 import { BACKDROPS, COSTUMES, SOUNDS, type LibraryCostume, type LibrarySound } from '../assets/library'
+import { assetError } from '../assets/registry'
 import { getAssetData, libraryIds, storeEmbeddedAsset } from '../engine'
 
 export type ProjectJSON = {
@@ -19,7 +20,11 @@ export type ProjectJSON = {
 const META = { semver: '3.0.0', vm: '15.1.1', agent: 'LiaScript' }
 
 function libraryEntry(key: string): LibraryCostume | LibrarySound | undefined {
-  return COSTUMES[key] || BACKDROPS[key] || SOUNDS[key]
+  for (const lib of [COSTUMES, BACKDROPS, SOUNDS]) if (Object.hasOwn(lib, key)) return lib[key]
+}
+
+function isSound(lib: LibraryCostume | LibrarySound): lib is LibrarySound {
+  return lib.dataFormat === 'wav' || lib.dataFormat === 'mp3'
 }
 
 /** Parses the compact text into a loadable project.json object. */
@@ -50,17 +55,21 @@ function expandAsset(asset: any) {
   if (asset.asset) {
     const lib = libraryEntry(asset.asset)
     const md5 = libraryIds.byKey.get(asset.asset)
-    if (!lib || !md5) throw new Error(`unknown asset "${asset.asset}"`)
+    if (!lib || !md5) {
+      const error = assetError(asset.asset)
+      throw new Error(`unknown asset "${asset.asset}"${error ? `: ${error}` : ''}`)
+    }
     asset.assetId = md5
     asset.dataFormat = lib.dataFormat
     asset.md5ext = `${md5}.${lib.dataFormat}`
-    if ('rotationCenterX' in lib) {
+    // unset values are left to the VM (centre of the image, decoded audio)
+    if (isSound(lib)) {
+      asset.rate ??= lib.rate
+      asset.sampleCount ??= lib.sampleCount
+    } else {
       asset.rotationCenterX ??= lib.rotationCenterX
       asset.rotationCenterY ??= lib.rotationCenterY
       asset.bitmapResolution ??= lib.dataFormat === 'svg' ? 1 : 2
-    } else {
-      asset.rate ??= lib.rate
-      asset.sampleCount ??= lib.sampleCount
     }
     delete asset.asset
   } else if (asset.data) {
@@ -73,12 +82,14 @@ function expandAsset(asset: any) {
 }
 
 function compactAsset(asset: any) {
-  const key = libraryIds.byMd5.get(asset.assetId)
+  // by name first: several keys may share the same image (and md5)
+  const key =
+    libraryIds.byKey.get(asset.name) === asset.assetId ? asset.name : libraryIds.byMd5.get(asset.assetId)
 
   if (key) {
     const lib = libraryEntry(key)
     const short: any = { name: asset.name, asset: key }
-    if (lib && 'rotationCenterX' in lib) {
+    if (lib && !isSound(lib) && lib.rotationCenterX !== undefined) {
       if (asset.rotationCenterX !== lib.rotationCenterX) short.rotationCenterX = asset.rotationCenterX
       if (asset.rotationCenterY !== lib.rotationCenterY) short.rotationCenterY = asset.rotationCenterY
     }
