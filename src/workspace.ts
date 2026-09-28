@@ -23,6 +23,11 @@ export class BlocksEditor {
   private renderedToolbox = ''
   private listeners: [string, (...args: any[]) => void][] = []
   private toolboxUpdateListener: (e: any) => void
+  /** the field that is being typed into, until its value is committed */
+  private typing: { blockId: string; name: string } | null = null
+
+  /** A value is being typed into a field (every keystroke, before Enter). */
+  onFieldTyping: () => void = () => {}
 
   constructor(container: HTMLElement, vm: VirtualMachine, profile: Profile, locale: string) {
     this.container = container
@@ -74,6 +79,20 @@ export class BlocksEditor {
       }
     }
     this.workspace.addChangeListener(this.toolboxUpdateListener)
+
+    // The VM takes every keystroke into the field, but does not count it as a
+    // change of the project (see Blocks.blocklyListen) — the text should
+    // follow while typing, too.
+    this.workspace.addChangeListener((event: any) => {
+      const E = SB.Events
+      if (event.type === E.BLOCK_FIELD_INTERMEDIATE_CHANGE) {
+        this.typing = { blockId: event.blockId, name: event.name }
+        this.onFieldTyping()
+      } else if (event.type === E.BLOCK_CHANGE && event.blockId === this.typing?.blockId) {
+        this.typing = null
+      }
+    })
+    document.addEventListener('keydown', this.onEscape, true)
 
     const flyoutWorkspace = this.workspace.getFlyout().getWorkspace()
     const varButton = (type: string) => () => SB.ScratchVariables.createVariable(this.workspace, null, type)
@@ -332,7 +351,27 @@ export class BlocksEditor {
     return !!(this.workspace.isDragging?.() || SB.WidgetDiv?.isVisible?.() || SB.DropDownDiv?.isVisible?.())
   }
 
+  /**
+   * Escape restores the old value of the field without any event, but the VM
+   * still has the last typed one: give it the value of the field again.
+   */
+  private onEscape = (e: KeyboardEvent) => {
+    if (e.key !== 'Escape' || !this.typing) return
+    const { blockId, name } = this.typing
+    this.typing = null
+    setTimeout(() => {
+      const block = this.workspace.getBlockById(blockId)
+      const vmBlock = this.vm.editingTarget?.blocks.getBlock(blockId)
+      if (!block || !vmBlock?.fields[name]) return
+      const value = block.getFieldValue(name)
+      if (vmBlock.fields[name].value !== value) {
+        this.vm.editingTarget.blocks.changeBlock({ id: blockId, element: 'field', name, value })
+      }
+    })
+  }
+
   dispose() {
+    document.removeEventListener('keydown', this.onEscape, true)
     for (const [event, fn] of this.listeners) this.vm.removeListener(event, fn)
     this.listeners = []
     try {

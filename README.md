@@ -1,7 +1,7 @@
 <!--
 author:   André Dietrich
 email:    LiaScript@web.de
-version:  0.3.0
+version:  0.3.1
 edit:     true
 language: en
 narrator: US English Female
@@ -113,7 +113,7 @@ header of your course.
 
 Fixed version (recommended, will not change anymore):
 
-`import: https://raw.githubusercontent.com/LiaTemplates/ScratchBlocks/0.3.0/README.md`
+`import: https://raw.githubusercontent.com/LiaTemplates/ScratchBlocks/0.3.1/README.md`
 
 Latest version (may change at any time):
 
@@ -500,7 +500,7 @@ are allowed; `maxBlocks` limits the number of blocks.
 
 ``` html
 <!--
-import: https://raw.githubusercontent.com/LiaTemplates/ScratchBlocks/0.3.0/README.md
+import: https://raw.githubusercontent.com/LiaTemplates/ScratchBlocks/0.3.1/README.md
 
 @onload
 ;(window.LiaScratchSetup = window.LiaScratchSetup || []).push(function (scratch) {
@@ -560,7 +560,7 @@ sounds into a sprite: a new sprite with this name starts with them.
 
 ``` html
 <!--
-import: https://raw.githubusercontent.com/LiaTemplates/ScratchBlocks/0.3.0/README.md
+import: https://raw.githubusercontent.com/LiaTemplates/ScratchBlocks/0.3.1/README.md
 
 @onload
 ;(window.LiaScratchSetup = window.LiaScratchSetup || []).push(function (scratch) {

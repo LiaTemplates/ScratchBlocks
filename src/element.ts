@@ -184,6 +184,7 @@ export class LiaScratchElement extends HTMLElement {
 
     const blocksArea = this.root.querySelector('.ls-blocks') as HTMLElement
     this.blocks = new BlocksEditor(blocksArea, vm, this.profile, lang())
+    this.blocks.onFieldTyping = () => this.scheduleSync()
     this.sprites.attach(vm)
 
     if (this.profile.speech) this.enableSpeech()
