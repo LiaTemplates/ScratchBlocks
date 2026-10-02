@@ -1,7 +1,7 @@
 <!--
 author:   André Dietrich
 email:    LiaScript@web.de
-version:  0.3.1
+version:  0.4.0
 edit:     true
 language: en
 narrator: US English Female
@@ -72,7 +72,7 @@ window.LiaScratch.check("@0", send, "@'input(0)", "@1", async function (api) {
 })
 </script>
 
-<lia-scratch id="@0" profile="@1"></lia-scratch>
+<lia-scratch id="@0" profile="@1" check></lia-scratch>
 @end
 -->
 
@@ -84,8 +84,12 @@ This template turns a LiaScript code block into a real Scratch 3 project.
 Attach `@Scratch` to a code block – and instead of the text editor you get the
 blocks and the stage of Scratch:
 
-* **▶** starts the project (like the green flag), **⏹** stops it.
-* Every start with changes creates a **new version**. Use the arrows below the
+* **▶** starts the project (like the green flag), **⏹** stops it. In a task
+  with `@Scratch.check`, ▶ also runs the check.
+* The **green flag** and the **stop sign** above the stage work as in Scratch.
+  In a task with `@Scratch.check` the flag only tries the project out, and a
+  big **Check** button next to them runs ▶ with the check.
+* Every start with ▶ and changes creates a **new version**. Use the arrows below the
   project to go back and forth between your versions.
 * The project itself stays **text in the code block** – readable, easy to
   write for teachers, and understandable even without Scratch.
@@ -113,7 +117,7 @@ header of your course.
 
 Fixed version (recommended, will not change anymore):
 
-`import: https://raw.githubusercontent.com/LiaTemplates/ScratchBlocks/0.3.1/README.md`
+`import: https://raw.githubusercontent.com/LiaTemplates/ScratchBlocks/0.4.0/README.md`
 
 Latest version (may change at any time):
 
@@ -500,7 +504,7 @@ are allowed; `maxBlocks` limits the number of blocks.
 
 ``` html
 <!--
-import: https://raw.githubusercontent.com/LiaTemplates/ScratchBlocks/0.3.1/README.md
+import: https://raw.githubusercontent.com/LiaTemplates/ScratchBlocks/0.4.0/README.md
 
 @onload
 ;(window.LiaScratchSetup = window.LiaScratchSetup || []).push(function (scratch) {
@@ -529,6 +533,7 @@ Use it with `@Scratch.profile(maze)`.
 | `maxBlocks`  | at most this many blocks (`0` = unlimited)           |
 | `resetOnRun` | put sprites back to their start state on ▶           |
 | `dragSprites`| `false`: only sprites with `draggable: yes` can be moved on the stage (keeps start positions fixed in tasks) |
+| `flag`       | `false`: hide the green flag and stop sign above the stage (default: shown) |
 
 ## Sprites and sounds
 
@@ -560,7 +565,7 @@ sounds into a sprite: a new sprite with this name starts with them.
 
 ``` html
 <!--
-import: https://raw.githubusercontent.com/LiaTemplates/ScratchBlocks/0.3.1/README.md
+import: https://raw.githubusercontent.com/LiaTemplates/ScratchBlocks/0.4.0/README.md
 
 @onload
 ;(window.LiaScratchSetup = window.LiaScratchSetup || []).push(function (scratch) {
@@ -761,7 +766,7 @@ window.LiaScratch.check("@0", send, "@'input(0)", "@1", async function (api) {
 })
 </script>
 
-<lia-scratch id="@0" profile="@1"></lia-scratch>
+<lia-scratch id="@0" profile="@1" check></lia-scratch>
 @end
 ```
 

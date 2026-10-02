@@ -1,6 +1,6 @@
 {
   "name": "lia-scratchblocks",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "description": "LiaScript template: real Scratch 3 blocks and stage inside LiaScript code blocks, versioned via LiaScript's code history",
   "app": "dist/index.js",
   "targets": {

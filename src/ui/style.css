@@ -36,6 +36,59 @@ lia-scratch {
   overflow: auto;
 }
 
+.ls-flagbar {
+  display: flex;
+  gap: 6px;
+  flex: 0 0 auto;
+}
+
+.ls-flagbar button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 6px;
+  border: 1px solid #d9e3f2;
+  border-radius: 8px;
+  background: #fff;
+  cursor: pointer;
+}
+
+.ls-flagbar button:hover,
+.ls-flagbar button:focus-visible {
+  background: #e6f0ff;
+  border-color: #4c97ff;
+}
+
+.ls-flagbar svg {
+  width: 28px;
+  height: 28px;
+}
+
+.ls-flagbar button.ls-check {
+  width: auto;
+  margin-left: auto;
+  gap: 6px;
+  padding: 6px 14px 6px 10px;
+  background: #0fbd8c;
+  border-color: #0b9a72;
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.ls-flagbar button.ls-check:hover,
+.ls-flagbar button.ls-check:focus-visible {
+  background: #0b9a72;
+  border-color: #087a5a;
+}
+
+.ls-flagbar button.ls-check svg {
+  width: 22px;
+  height: 22px;
+}
+
 .ls-stage {
   position: relative;
   width: 100%;

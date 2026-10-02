@@ -23,6 +23,8 @@ export interface Profile {
   resetOnRun: boolean
   /** may every sprite be dragged on the stage (false: only sprites marked draggable) */
   dragSprites?: boolean
+  /** green flag and stop buttons above the stage (default: true) */
+  flag?: boolean
 }
 
 const LEVEL1 = [

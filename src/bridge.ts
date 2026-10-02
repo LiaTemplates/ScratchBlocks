@@ -54,6 +54,17 @@ export class EditorBridge {
     return found
   }
 
+  /** The box around LiaScript's ▶/⏹ button of the code block. */
+  runControl(): HTMLElement | null {
+    return this.codeBlock()?.querySelector<HTMLElement>('.lia-code-control__action') ?? null
+  }
+
+  /** LiaScript's ▶/⏹ button itself. */
+  runButton(): HTMLElement | null {
+    const control = this.runControl()
+    return control?.querySelector<HTMLElement>('button') ?? control
+  }
+
   /** The <lia-editor> of file `index` within the code block. */
   editorElement(index = 0): any {
     const block = this.codeBlock()
@@ -163,7 +174,7 @@ export class EditorBridge {
       ace.on('change', this.changeHandler)
     }
 
-    const button = this.codeBlock()?.querySelector('.lia-code-control__action') ?? null
+    const button = this.runControl()
     if (button !== this.observedButton) {
       this.detachButton()
       this.observedButton = button

@@ -20,6 +20,15 @@ export type Send = {
 
 const SYNC_DELAY = 150
 
+// the green flag and stop sign of Scratch 3
+const FLAG_ICON =
+  '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3v18" stroke="#45993d" stroke-width="2.2" stroke-linecap="round"/>' +
+  '<path d="M6 4c3-1.6 5.5 1.6 8.5 0 1.5-.8 2.8-.9 4.5-.4v9.3c-1.7-.5-3-.4-4.5.4-3 1.6-5.5-1.6-8.5 0z" fill="#4cbf56" stroke="#45993d" stroke-width="1.2" stroke-linejoin="round"/></svg>'
+const CHECK_ICON =
+  '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 12.5l5 5L19.5 7" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+const STOP_ICON =
+  '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.1 3h7.8L21 8.1v7.8L15.9 21H8.1L3 15.9V8.1z" fill="#ec5959" stroke="#b84848" stroke-width="1.2" stroke-linejoin="round"/></svg>'
+
 export class LiaScratchElement extends HTMLElement {
   profile!: Profile
   vm!: VirtualMachine
@@ -39,12 +48,17 @@ export class LiaScratchElement extends HTMLElement {
   private baseline: string | null = null
   private loading = false
   private send: Send | null = null
+  /** scripts started with the widget's own green flag are running */
+  private flagRun = false
+  /** the code block is a task with `@Scratch.check` */
+  private hasCheck = false
   private runDone: (() => void) | null = null
   private disposed = false
   private started = false
   /** speech bubble texts at the end of the last runFor (by target id) */
   readonly saidAtEnd = new Map<string, string>()
   private labels: [HTMLElement, Key][] = []
+  private tooltips: [HTMLElement, Key][] = []
   private stopLanguageWatch: (() => void) | null = null
   private stopAssetWatch: (() => void) | null = null
 
@@ -59,6 +73,7 @@ export class LiaScratchElement extends HTMLElement {
       .then(() => {
         if (this.disposed) return
         this.profile = resolveProfile(spec)
+        this.hasCheck = this.hasAttribute('check')
         this.buildDOM()
         return this.init()
       })
@@ -118,6 +133,7 @@ export class LiaScratchElement extends HTMLElement {
 
     const bar = this.buildToolbar()
 
+    if (this.profile.flag !== false) side.append(this.buildFlagBar())
     side.append(this.stage.element, this.sprites.element, bar)
     main.append(blocksArea, side)
     this.root.append(main, this.errorBox)
@@ -159,6 +175,36 @@ export class LiaScratchElement extends HTMLElement {
       else this.root.requestFullscreen?.()
     })
 
+    return bar
+  }
+
+  /** Green flag and stop above the stage, as in Scratch: trying out, no check. */
+  private buildFlagBar(): HTMLElement {
+    const bar = document.createElement('div')
+    bar.className = 'ls-flagbar'
+
+    const button = (cls: string, label: Key, icon: string, fn: () => void) => {
+      const b = document.createElement('button')
+      b.type = 'button'
+      b.className = cls
+      b.innerHTML = icon
+      b.title = t(label)
+      b.setAttribute('aria-label', t(label))
+      this.tooltips.push([b, label])
+      b.onclick = fn
+      bar.appendChild(b)
+      return b
+    }
+
+    button('ls-flag', 'greenFlag', FLAG_ICON, () => this.greenFlag())
+    button('ls-stop', 'stop', STOP_ICON, () => this.stopFlag())
+    if (this.hasCheck) {
+      const check = button('ls-check', 'check', CHECK_ICON, () => this.runCheck())
+      const label = document.createElement('span')
+      label.textContent = t('check')
+      this.labels.push([label, 'check'])
+      check.appendChild(label)
+    }
     return bar
   }
 
@@ -206,7 +252,10 @@ export class LiaScratchElement extends HTMLElement {
     vm.on('MONITORS_UPDATE', () => {
       if (!this.isRunning() && vm.runtime.threads.length === 0) this.scheduleSync()
     })
-    vm.on('PROJECT_RUN_STOP', () => this.runDone?.())
+    vm.on('PROJECT_RUN_STOP', () => {
+      this.flagRun = false
+      this.runDone?.()
+    })
 
     // an asset defined later (e.g. by a script on the slide) may fix the text
     this.stopAssetWatch = onAssetsChanged(() => {
@@ -240,6 +289,10 @@ export class LiaScratchElement extends HTMLElement {
     this.project.options = { lang: courseLang(), display }
     this.root.lang = display
     for (const [el, key] of this.labels) el.textContent = t(key)
+    for (const [el, key] of this.tooltips) {
+      el.title = t(key)
+      el.setAttribute('aria-label', t(key))
+    }
     await this.vm.setLocale(display, vmMessages(display))
     this.blocks.setLocale(display)
     this.sprites.render()
@@ -351,13 +404,69 @@ export class LiaScratchElement extends HTMLElement {
   }
 
   isRunning() {
-    return this.send !== null
+    return this.send !== null || this.flagRun
+  }
+
+  /**
+   * The widget's green flag. Without a check it is LiaScript's ▶ (which also
+   * stores a version); in a task it only tries the project out, the check
+   * button runs ▶.
+   */
+  async greenFlag() {
+    await this.ready
+    if (!this.hasCheck && this.bridge.runButton()) {
+      this.clickRun()
+      return
+    }
+    // a ▶ run (maybe a check) is going on: leave it alone
+    if (this.send) return
+    this.syncNow()
+    if (this.profile.resetOnRun) this.project.reset()
+    this.flagRun = true
+    this.vm.greenFlag()
+    // a project without green-flag scripts never starts any thread
+    requestAnimationFrame(() => {
+      if (this.vm.runtime.threads.length === 0) this.flagRun = false
+    })
+  }
+
+  /** The widget's check button: LiaScript's ▶, which runs the check. */
+  async runCheck() {
+    await this.ready
+    // a check is already running
+    if (this.send) return
+    if (this.flagRun) {
+      this.vm.stopAll()
+      this.flagRun = false
+    }
+    this.clickRun()
+  }
+
+  /** Clicks LiaScript's ▶; a running ▶ is stopped first (its button is ⏹ then). */
+  private clickRun() {
+    if (this.send) {
+      this.stop()
+      setTimeout(() => this.bridge.runButton()?.click(), 150)
+    } else {
+      this.bridge.runButton()?.click()
+    }
+  }
+
+  /** The widget's stop sign: stops everything, also a ▶ run. */
+  stopFlag() {
+    this.flagRun = false
+    if (this.send) this.stop()
+    else this.vm.stopAll()
   }
 
   /** ▶ — called by the macro script with the code block text. */
   async run(send: Send, code: string, options: { untilDone?: boolean } = {}) {
     await this.ready
     this.stopRun()
+    if (this.flagRun) {
+      this.vm.stopAll()
+      this.flagRun = false
+    }
 
     if (code !== this.project.loadedText && !this.bridge.hasPending()) {
       await this.load(code)
